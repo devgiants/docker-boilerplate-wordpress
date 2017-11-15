@@ -1,0 +1,25 @@
+core download:
+  locale: fr_FR
+  force: true
+
+config create:
+  dbhost: ${MYSQL_HOST}
+  dbname: ${MYSQL_DB}
+  dbprefix: ${MYSQL_DB_PREFIX}
+  dbuser: ${MYSQL_USER}
+  dbpass: ${MYSQL_PASSWORD}
+  extra-php: |
+    define( 'WP_DEBUG', true );
+    define( 'WP_DEBUG_LOG', true );
+
+
+core install:
+  url:            localhost
+  title:          ${PROJECT_NAME}
+  admin_user:     ${ADMIN_USER}
+  admin_password: ${ADMIN_PASSWORD}
+  admin_email:    ${ADMIN_EMAIL}
+  skip-email:     true
+
+apache_modules:
+  - mod_rewrite
