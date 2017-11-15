@@ -64,6 +64,7 @@ _Note : Once you have stop one project, you can up another one safely._
 
 _Note : All volumes set will ensure to persist both app files and database._
 
+### Reset from scratch
 If you want to reset everything, just
 1. Run `docker-compose down` 
 2. Remove the __WORDPRESS_HOST_RELATIVE_APP_PATH__ and the __MYSQL_HOST_VOLUME_PATH__
