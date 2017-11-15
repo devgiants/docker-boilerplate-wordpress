@@ -7,6 +7,7 @@ ARG UID
 # Installation PHP + extensions
 RUN apt-get update && apt-get install -y \
     php-fpm \
+    php-mbstring \
     php-mcrypt \
     php-mysql \
     php-apcu \
