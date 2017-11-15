@@ -7,6 +7,11 @@ set +o allexport
 # Build and live system
 docker-compose up -d --build
 
+# Create target dir if not exists already, and set it as current user (needed for container mapping)
+mkdir -p ${WORDPRESS_HOST_RELATIVE_APP_PATH}
+sudo chown -R ${HOST_USER}:${HOST_USER} ${WORDPRESS_HOST_RELATIVE_APP_PATH}
+sudo chmod -R 775 ${WORDPRESS_HOST_RELATIVE_APP_PATH}
+
 # Copy WP-cli.yml with env var substitution
 envsubst < ./wp-cli.yml > ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-cli.yml
 

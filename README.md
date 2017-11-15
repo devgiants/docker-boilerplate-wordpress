@@ -16,6 +16,7 @@ First of all, specify parameters needed for the project
 - __LOGS_DIR__: The logs directory.
 
 ##### Host
+- __HOST_USER__: Your current username. Needed to ensure creation (directories...) with your current user to preserve mapping between container and host
 - __HOST_UID__: Your current user host ID (uid). This is mandatory to map the UID between PHP container and host, in order to let you edit files both in container an through host volume access.
 - __HOST_GID__: Your current main group host ID (gid). (Not used so far)
 
