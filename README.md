@@ -12,7 +12,7 @@ So far, just __download archive__ and __extract it__ in the __target project dir
 First of all, specify parameters needed for the project
 
 ##### Directories
-- __WORDPRESS_HOST_RELATIVE_APP_PATH__: This is the relative path from project initial path. Default to `./symfony`. _Note: a volume will be created on this path in order to persist Wordpress app files_. 
+- __WORDPRESS_HOST_RELATIVE_APP_PATH__: This is the relative path from project initial path. Default to `./wordpress`. _Note: a volume will be created on this path in order to persist Wordpress app files_. 
 - __LOGS_DIR__: The logs directory.
 
 ##### Host
@@ -64,7 +64,12 @@ _Note : Once you have stop one project, you can up another one safely._
 
 _Note : All volumes set will ensure to persist both app files and database._
 
-### Symfony
+If you want to reset everything, just
+1. Run `docker-compose down` 
+2. Remove the __WORDPRESS_HOST_RELATIVE_APP_PATH__ and the __MYSQL_HOST_VOLUME_PATH__
+3. Then goes back on `bash init.sh`
+
+### Wordpress
 Accessible on `localhost` by default.
 
 Important note : to execute wp-cli, __be sure to connect to php container with www-data user__. The mapping described above targets www-data on container.
