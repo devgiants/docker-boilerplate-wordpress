@@ -4,13 +4,18 @@ set -o allexport
 source ./.env
 set +o allexport
 
-# Build and live system
-docker-compose up -d --build
+# Create mysql volume target dir if not exists already, and set it as current user (needed for container mapping)
+mkdir -p ${MYSQL_HOST_VOLUME_PATH}
+sudo chown -R ${HOST_USER}:${HOST_USER} ${MYSQL_HOST_VOLUME_PATH}
+sudo chmod -R 775 ${MYSQL_HOST_VOLUME_PATH}
 
 # Create target dir if not exists already, and set it as current user (needed for container mapping)
 mkdir -p ${WORDPRESS_HOST_RELATIVE_APP_PATH}
 sudo chown -R ${HOST_USER}:${HOST_USER} ${WORDPRESS_HOST_RELATIVE_APP_PATH}
 sudo chmod -R 775 ${WORDPRESS_HOST_RELATIVE_APP_PATH}
+
+# Build and live system
+docker-compose up -d --build
 
 # Copy WP-cli.yml with env var substitution
 envsubst < ./wp-cli.yml > ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-cli.yml
