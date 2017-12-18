@@ -50,4 +50,5 @@ docker-compose exec -u www-data php wp plugin delete hello
 docker-compose exec -u www-data php wp rewrite structure "/%postname%/" --hard
 docker-compose exec -u www-data php wp rewrite flush --hard
 
-# TODO install Sage
+# Install Roots Sage
+docker-compose exec -u www-data php composer create-project roots/sage ${PROJECT_NAME} 8.5.3
