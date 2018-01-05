@@ -13,6 +13,9 @@ RUN a2enmod rewrite
 ADD app.conf /etc/apache2/sites-available/
 RUN a2ensite app
 
+# Ensure old PID due to previous usage are killed
+RUN rm -f /var/run/apache2/apache2.pid
+
 EXPOSE 80
 
 RUN usermod -u ${UID} www-data
