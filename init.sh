@@ -25,10 +25,10 @@ envsubst < ./wp-cli.yml > ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-cli.yml
 docker-compose exec -u www-data php wp core download
 
 # Create wp-config using wp-cli.yml file
-docker-compose exec -u www-data php wp config create
+docker-compose exec -u www-data php wp config createdocker-cio
 
 # Create database
-docker-compose exec -u www-data php wp db create
+#docker-compose exec -u www-data php wp db create
 
 # Install site
 docker-compose exec -u www-data php wp core install

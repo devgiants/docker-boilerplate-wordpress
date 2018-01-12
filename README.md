@@ -26,7 +26,7 @@ First of all, specify parameters needed for the project
 
 ##### Database
 - __MYSQL_HOST__: The database host. Has to be equal to database container name in `docker-compose.yml` file (default `mysql`).    
-- __MYSQL_DB__: The database name you want
+- __MYSQL_DATABASE__: The database name you want
 - __MYSQL_USER__: root (not used so far, assuming root connection on dev stage)
 - __MYSQL_ROOT_PASSWORD__: the database password you want 
 - __MYSQL_PORT__: the MySQL instance port. Careful, this is the MySQL port __in container__. Default to `3306`  

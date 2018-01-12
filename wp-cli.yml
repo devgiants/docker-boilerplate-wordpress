@@ -4,8 +4,8 @@ core download:
 
 config create:
   dbhost: ${MYSQL_HOST}
-  dbname: ${MYSQL_DB}
-  dbprefix: ${MYSQL_DB_PREFIX}
+  dbname: ${MYSQL_DATABASE}
+  dbprefix: ${MYSQL_DATABASE_PREFIX}
   dbuser: ${MYSQL_USER}
   dbpass: ${MYSQL_PASSWORD}
   extra-php: |
