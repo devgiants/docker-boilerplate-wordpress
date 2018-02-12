@@ -14,7 +14,7 @@ config create:
 
 
 core install:
-  url:            localhost
+  url:            localhost:${APPLICATION_WEB_PORT}
   title:          ${PROJECT_NAME}
   admin_user:     ${ADMIN_USER}
   admin_password: ${ADMIN_PASSWORD}
