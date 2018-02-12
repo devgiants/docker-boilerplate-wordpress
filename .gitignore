@@ -2,3 +2,4 @@
 docker/logs/apache/*
 data/mysql/5.7/*
 wordpress/.wp-cli
+wordpress/.composer
