@@ -53,8 +53,19 @@ docker-compose exec --user www-data php wp rewrite flush --hard
 # Install Roots Sage
 docker-compose exec --user www-data php composer create-project roots/sage ${PROJECT_NAME} 8.5.3
 
-# Remove standard themes
-docker-compose exec --user www-data php wp theme delete twentyfifteen twentysixteen twentyseventeen
+# Move theme in theme folder
+docker-compose exec --user www-data php mv ${PROJECT_NAME} wp-content/themes
 
 # Activate sage theme
 docker-compose exec --user www-data php wp theme activate ${PROJECT_NAME}
+
+# Remove standard themes
+docker-compose exec --user www-data php wp theme delete twentyfifteen twentysixteen twentyseventeen
+
+# First compilation
+cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME}
+
+npm install
+bower install
+gulp --production
+
