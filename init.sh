@@ -36,10 +36,15 @@ docker-compose exec --user www-data php wp core install
 # TODO Install ACF pro https://github.com/wp-premium/advanced-custom-fields-pro/archive/master.zip
 
 # install plugins
-while read line
-do
-    docker-compose exec --user www-data php wp plugin install $line --activate
-done < ./plugins.txt
+#while read line
+#do
+#    docker-compose exec --user www-data php wp plugin install $line --activate
+#done < ./plugins.txt
+
+docker-compose exec --user www-data php wp plugin install wordpress-seo --activate
+docker-compose exec --user www-data php wp plugin install better-wp-security --activate
+docker-compose exec --user www-data php wp plugin install ga-google-analytics --activate
+docker-compose exec --user www-data php wp plugin install pixelyoursite --activate
 
 # Clean tedious elements
 docker-compose exec --user www-data php wp post delete 1 --force

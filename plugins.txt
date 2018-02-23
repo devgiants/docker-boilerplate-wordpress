@@ -1,2 +1,4 @@
 wordpress-seo
 better-wp-security
+ga-google-analytics
+pixelyoursite
