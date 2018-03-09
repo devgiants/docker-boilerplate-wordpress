@@ -1,0 +1,14 @@
+{
+  "name": "lch/docker-wordpress",
+  "type": "project",
+  "description": "Ready-To-Start LAMP stack with Wordpress, WP-CLI and PHPMyAdmin",
+  "keywords": ["docker", "wordpress", "lamp", "wp-cli", "phpmyadmin"],
+  "homepage": "https://github.com/compagnie-hyperactive/docker-boilerplate-wordpress",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Nicolas BONNIOT",
+      "email": "nicolas@devgiants.fr"
+    }
+  ]
+}
