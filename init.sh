@@ -17,6 +17,9 @@ sudo chmod -R 775 ${WORDPRESS_HOST_RELATIVE_APP_PATH}
 # Build and live system
 docker-compose up -d --build
 
+# Force restart
+docker-compose restart
+
 # Copy WP-cli.yml with env var substitution
 envsubst < ./wp-cli.yml > ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-cli.yml
 
