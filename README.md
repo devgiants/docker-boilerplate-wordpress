@@ -3,7 +3,13 @@ This boilerplate is a ready-to-start customizable LAMP stack with Wordpress, WP-
 __Warning : for Linux users only__.
 
 ## Installation
-So far, just __download archive__ and __extract it__ in the __target project directory__ (i.e `/home/your_user/my_project`).
+Use composer `create-project` command :
+
+```
+composer create-project lch/docker-wordpress target-dir 1.1.1
+```
+
+This will clone the stack in your directory
 
 ## Configuration
 ### Custom parameters
