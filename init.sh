@@ -18,11 +18,13 @@ sudo chmod -R 775 ${WORDPRESS_HOST_RELATIVE_APP_PATH}
 docker-compose up -d --build
 
 # Force restart
-docker-compose restart
+docker-compose stop
 
 # Copy WP-cli.yml with env var substitution
 envsubst < ./wp-cli.yml > ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-cli.yml
 
+# Restart containers
+docker-compose up -d
 
 # Install WP
 docker-compose exec --user www-data php wp core download
