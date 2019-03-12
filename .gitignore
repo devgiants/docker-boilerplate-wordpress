@@ -1,6 +1,6 @@
 .idea
 docker/logs/apache/*
 data/mysql/5.7/*
-wordpress/.wp-cli
-wordpress/.composer
-wordpress/wp-content/debug.log
+app/.wp-cli
+app/.composer
+app/wp-content/debug.log
