@@ -1,0 +1,73 @@
+<?php
+namespace Deployer;
+
+require 'recipe/common.php';
+
+// Project name
+set('application', '${PROJECT_NAME}');
+
+// Project repository
+set('repository', '${PROJECT_REPO}');
+
+// [Optional] Allocate tty for git clone. Default value is false.
+set('git_tty', true); 
+
+// Shared files/dirs between deploys 
+set('shared_files', ['wp-config.php', '.htaccess', '.htpasswd']);
+set('shared_dirs', ['wp-content/uploads', 'logs']);
+
+// Writable dirs by web server 
+set('writable_dirs', []);
+
+
+// Hosts
+//host('yourproject.preprod')
+//	->stage('preprod')
+//	->set('branch', 'preprod')
+//    ->set('deploy_path', '/var/www/yourproject');
+
+//host('yourproject.prod')
+//	->stage('prod')
+//	->set('branch', 'master')
+//	->set('deploy_path', '/var/www/yourproject');
+
+// Tasks
+desc('Deploy your project');
+task('deploy', [
+    'deploy:info',
+    'deploy:prepare',
+    'deploy:lock',
+    'deploy:release',
+    'deploy:update_code',
+    'deploy:shared',
+    'deploy:writable',
+    'deploy:clear_paths',
+    'deploy:symlink',
+    'deploy:unlock',
+    'cleanup',
+    'success'
+]);
+
+// [Optional] If deploy fails automatically unlock.
+after('deploy:failed', 'deploy:unlock');
+
+desc('Remove all uneeded files');
+task('remove', function () {
+	run("rm -rf {{release_path}}/docker {{release_path}}/.env {{release_path}}/deploy.php {{release_path}}/docker-compose.yml {{release_path}}/Makefile {{release_path}}/wp-cli.yml");
+});
+after('cleanup', 'remove');
+
+
+desc('Composer install');
+task('deploy:composer_install', function () {
+	run("cd '{{release_path}}'; composer install");
+});
+before('deploy:symlink', 'deploy:composer_install');
+
+
+// If ACF with automatic fields sync
+//desc('Update ACF fields from files');
+//task('deploy:acf_update', function () {
+//	run("cd '{{release_path}}'; wp acf clean --database; wp acf import --all");
+//});
+//after('deploy:symlink', 'acf_update');
