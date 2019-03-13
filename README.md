@@ -30,6 +30,7 @@ First of all, specify parameters needed for the project
 - __PROJECT_NAME__: The project name : used as Wordpress site name. __IMPORTANT : as this is used for setting the theme directory as well, keep this name with underscores (i.e : project_test)__
 - __ADMIN_USER__: the first user to be created
 - __ADMIN_PASSWORD__: the first user password. __IMPORTANT: Keep it enclosed with double quotes__.
+- __PROJECT_REPO__: the git repo address
 
 - __WP_CLI_CACHE_DIR__: WP-CLI cache directory. Leave it this way.
 
@@ -55,13 +56,19 @@ You can have multiple projects using this boilerplate, but without changing port
 There are 2 ways to use this : __initialisation__ and __day-to-day usage__. A `Makefile` is created to help manipulate things
 ### Initialisation
 
-TODO 
+#### Blank project
+Just execute `make install` to completly setup blank project. Please look to other entry points in `Makefile` to see what you can do
+
+#### Project with Sage 8.5.3 theme
+
+Just execute `make sage` to set a complete project with Sage 8.5.3. Sage 9 is coming...
 
 ### Day-to-day usage
 
-TODO 
+- Execute `make up` for bringing project live
+- Execute `make down` for stopping and removing container instances.
+- Execute `make bash-php` for a shell in PHP container with `www-data` user.
 
-_Note : Once you have stop one project, you can up another one safely._
 
 _Note : All volumes set will ensure to persist both app files and database._
 
