@@ -5,3 +5,4 @@ docker/data/mysql/5.7/*
 .composer
 wp-content/debug.log
 /vendor
+wp-content/uploads
