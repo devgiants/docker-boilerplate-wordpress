@@ -14,21 +14,22 @@ sage: install
 	# Install Roots Sage
 	docker-compose exec --user www-data php composer create-project roots/sage ${PROJECT_NAME} 8.5.3
 
+	# First compilation
+	# cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME}
+
 	# Move theme in theme folder
 	docker-compose exec --user www-data php mv ${PROJECT_NAME} wp-content/themes
+
+	# Install nodes modules
+	docker-compose exec --user www-data php npm install --prefix ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME}
+
+	docker-compose exec --user www-data php bash -c "cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME} && bower install && gulp --production"
 
 	# Activate sage theme
 	docker-compose exec --user www-data php wp theme activate ${PROJECT_NAME}
 
 	# Remove standard themes
-	docker-compose exec --user www-data php wp theme delete twentyfifteen twentysixteen twentyseventeen
-
-	# First compilation
-	cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME}
-
-	npm install
-	bower install
-	gulp --production
+	docker-compose exec --user www-data php wp theme delete twentysixteen twentyseventeen twentynineteen
 
 # Build app
 install: build composer-install
@@ -66,6 +67,9 @@ install: build composer-install
 	docker-compose exec --user www-data php wp rewrite flush --hard
 
 
+gulp: up
+	docker-compose exec --user www-data php bash -c "cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME} && bower install && gulp --production"
+
 composer-install: up
 	# Install PHP dependencies
 	docker-compose exec -u www-data php composer install
@@ -74,10 +78,14 @@ composer-install: up
 # Up containers
 up:
 	docker-compose up -d
+	docker-compose exec php usermod -u ${HOST_UID} www-data
+	docker-compose exec apache usermod -u ${HOST_UID} www-data
 
 # Up containers, with build forced
 build:
 	docker-compose up -d --build
+	docker-compose exec php usermod -u ${HOST_UID} www-data
+	docker-compose exec apache usermod -u ${HOST_UID} www-data
 
 # Down containers
 down:

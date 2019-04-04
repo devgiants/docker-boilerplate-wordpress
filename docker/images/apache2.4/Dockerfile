@@ -18,7 +18,8 @@ RUN rm -f /var/run/apache2/apache2.pid
 
 EXPOSE 80
 
-RUN usermod -u ${UID} www-data
+# This step is now done on make up or make build tasks
+#RUN usermod -u ${UID} www-data
 
 WORKDIR /var/www/html
 
