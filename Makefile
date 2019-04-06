@@ -12,7 +12,7 @@ bash-php-root: up
 
 sage: install
 	# Install Roots Sage
-	docker-compose exec --user www-data php composer create-project roots/sage ${PROJECT_NAME} 8.5.3
+	docker-compose exec --user www-data php composer create-project roots/sage ${PROJECT_NAME} ${SAGE_VERSION}
 
 	# First compilation
 	# cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME}

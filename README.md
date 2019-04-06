@@ -40,7 +40,7 @@ First of all, specify parameters needed for the project
 - __MYSQL_DATABASE_PREFIX__: THe database prefix you want for your Wordpress installation
 - __MYSQL_USER__: THe database user you want to use (will be created on container creation)
 - __MYSQL_PASSWORD__: the database password you want 
-- __MYSQL_HOST_PORT: the host port you want to bind Mysql Server in container to. 
+- __MYSQL_HOST_PORT__: the host port you want to bind Mysql Server in container to. 
 - __MYSQL_PORT__: the MySQL instance port. Careful, this is the MySQL port __in container__. Default to `3306`  
 - __MYSQL_HOST_VOLUME_PATH__: default `./docker/data/mysql/5.7`. This is the volume which will store database.
 
@@ -50,6 +50,12 @@ You can have multiple projects using this boilerplate, but without changing port
 
 - __APPLICATION_WEB_PORT__: default to `80`.
 - __PHP_MY_ADMIN_PORT__: default to `81`.
+
+##### Sage
+
+Allows you to set the version of Sage when installing the project.
+
+- __SAGE_VERSION__: default to `8.5.3`.
 
 
 ## Usage
