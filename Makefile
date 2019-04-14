@@ -2,6 +2,8 @@
 include .env
 export $(shell sed 's/=.*//' .env)
 
+CHECK=$(shell expr $(SAGE_VERSION) \>= 9)
+
 # Provides a bash in PHP container (user www-data)
 bash-php: up
 	docker-compose exec -u www-data php bash
@@ -23,7 +25,11 @@ sage: install
 	# Install nodes modules
 	docker-compose exec --user www-data php npm install --prefix ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME}
 
-	docker-compose exec --user www-data php bash -c "cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME} && bower install && gulp --production"
+	if [ "${CHECK}" = "0" ]; then \
+		docker-compose exec --user www-data php bash -c "cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME} && bower install && gulp --production"
+	else \
+		docker-compose exec --user www-data php bash -c "cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME} && npm run build"
+	fi
 
 	# Activate sage theme
 	docker-compose exec --user www-data php wp theme activate ${PROJECT_NAME}
