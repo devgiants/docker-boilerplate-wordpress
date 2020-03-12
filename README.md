@@ -68,9 +68,9 @@ There are 2 ways to use this : __initialisation__ and __day-to-day usage__. A `M
 #### Blank project
 Just execute `make install` to completly setup blank project. Please look to other entry points in `Makefile` to see what you can do
 
-#### Project with Sage 8.5.3 theme
+#### Project with Sage 9 theme
 
-Just execute `make sage` to set a complete project with Sage 8.5.3. Sage 9 is coming...
+Just execute `make sage` to set a complete project with Sage 9.
 
 ### Day-to-day usage
 
