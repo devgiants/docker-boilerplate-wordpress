@@ -21,7 +21,7 @@ sage: install
 	docker-compose exec --user www-data php mv ${PROJECT_NAME} wp-content/themes
 
 	# Install nodes modules
-	docker-compose exec --user www-data php yarn install --prefix ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME}
+	docker-compose exec --user www-data php yarn install --cwd ${WORDPRESS_HOST_RELATIVE_APP_PATH}wp-content/themes/${PROJECT_NAME}
 
 
 	docker-compose exec --user www-data php bash -c "cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME} && yarn run build"
