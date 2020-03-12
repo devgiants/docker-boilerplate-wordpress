@@ -30,7 +30,7 @@ sage: install
 	docker-compose exec --user www-data php bash -c "cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME} && composer install"
 
 	# Activate sage theme
-	docker-compose exec --user www-data php wp theme activate ${PROJECT_NAME}
+	docker-compose exec --user www-data php wp theme activate ${PROJECT_NAME}/resources
 
 	# Remove standard themes
 	docker-compose exec --user www-data php wp theme delete twentysixteen twentyseventeen twentynineteen
