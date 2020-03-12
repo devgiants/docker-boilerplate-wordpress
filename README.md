@@ -11,6 +11,15 @@ composer create-project lch/docker-wordpress target-dir 1.1.6
 
 This will clone the stack in your directory
 
+### Requirements
+
+**Mac users** : During installation, the script requires the use of envsubst which is not installed by default on MacOS. You can install it directly with Homebrew:
+
+```
+brew install gettext
+brew link --force gettext 
+```
+
 ## Configuration
 ### Custom parameters
 
