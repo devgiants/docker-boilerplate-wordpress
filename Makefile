@@ -33,7 +33,7 @@ sage: install
 	docker-compose exec --user www-data php wp theme activate ${PROJECT_NAME}/resources
 
 	# Remove standard themes
-	docker-compose exec --user www-data php wp theme delete twentysixteen twentyseventeen twentynineteen
+	docker-compose exec --user www-data php wp theme delete twentysixteen twentyseventeen twentynineteen twentytwenty
 
 # Build app
 install: build composer-install
