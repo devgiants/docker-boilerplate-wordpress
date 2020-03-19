@@ -12,7 +12,7 @@ bash-php-root: up
 
 sage: install
 	# Install Roots Sage
-	docker-compose exec --user www-data php composer create-project roots/sage ${PROJECT_NAME} 8.5.3
+	docker-compose exec --user www-data php composer create-project roots/sage ${PROJECT_NAME} 9.0.9
 
 	# First compilation
 	# cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME}
@@ -21,15 +21,19 @@ sage: install
 	docker-compose exec --user www-data php mv ${PROJECT_NAME} wp-content/themes
 
 	# Install nodes modules
-	docker-compose exec --user www-data php npm install --prefix ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME}
+	docker-compose exec --user www-data php yarn install --cwd ${WORDPRESS_HOST_RELATIVE_APP_PATH}wp-content/themes/${PROJECT_NAME}
 
-	docker-compose exec --user www-data php bash -c "cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME} && bower install && gulp --production"
+
+	docker-compose exec --user www-data php bash -c "cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME} && yarn run build"
+
+	# Build sage theme composer
+	docker-compose exec --user www-data php bash -c "cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME} && composer install"
 
 	# Activate sage theme
-	docker-compose exec --user www-data php wp theme activate ${PROJECT_NAME}
+	docker-compose exec --user www-data php wp theme activate ${PROJECT_NAME}/resources
 
 	# Remove standard themes
-	docker-compose exec --user www-data php wp theme delete twentysixteen twentyseventeen twentynineteen
+	docker-compose exec --user www-data php wp theme delete twentysixteen twentyseventeen twentynineteen twentytwenty
 
 # Build app
 install: build composer-install
@@ -67,8 +71,8 @@ install: build composer-install
 	docker-compose exec --user www-data php wp rewrite flush --hard
 
 
-gulp: up
-	docker-compose exec --user www-data php bash -c "cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME} && bower install && gulp --production"
+build-assets: up
+	docker-compose exec --user www-data php bash -c "cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME} && yarn install && yarn build:production"
 
 composer-install: up
 	# Install PHP dependencies

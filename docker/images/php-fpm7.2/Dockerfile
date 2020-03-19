@@ -47,12 +47,6 @@ RUN mv wp-cli.phar /usr/local/bin/wp
 RUN curl -sL https://deb.nodesource.com/setup_11.x | bash -
 RUN apt-get install -y nodejs
 
-# Install Bower globally
-RUN npm install -g bower
-
-# Install Gulp globally
-RUN npm install -g gulp
-
 # Yarn install
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
