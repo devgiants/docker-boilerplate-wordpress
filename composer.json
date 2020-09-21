@@ -1,5 +1,5 @@
 {
-  "name": "lch/docker-wordpress",
+  "name": "devgiants/docker-wordpress",
   "type": "project",
   "description": "Ready-To-Start LAMP stack with Wordpress, WP-CLI and PHPMyAdmin",
   "keywords": ["docker", "wordpress", "lamp", "wp-cli", "phpmyadmin"],
