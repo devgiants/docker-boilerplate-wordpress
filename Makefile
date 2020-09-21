@@ -10,31 +10,6 @@ bash-php: up
 bash-php-root: up
 	docker-compose exec php bash
 
-sage: install
-	# Install Roots Sage
-	docker-compose exec --user www-data php composer create-project roots/sage ${PROJECT_NAME} 9.0.9
-
-	# First compilation
-	# cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME}
-
-	# Move theme in theme folder
-	docker-compose exec --user www-data php mv ${PROJECT_NAME} wp-content/themes
-
-	# Install nodes modules
-	docker-compose exec --user www-data php yarn install --cwd ${WORDPRESS_HOST_RELATIVE_APP_PATH}wp-content/themes/${PROJECT_NAME}
-
-
-	docker-compose exec --user www-data php bash -c "cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME} && yarn run build"
-
-	# Build sage theme composer
-	docker-compose exec --user www-data php bash -c "cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME} && composer install"
-
-	# Activate sage theme
-	docker-compose exec --user www-data php wp theme activate ${PROJECT_NAME}/resources
-
-	# Remove standard themes
-	docker-compose exec --user www-data php wp theme delete twentysixteen twentyseventeen twentynineteen twentytwenty
-
 # Build app
 install: build composer-install
 
@@ -58,8 +33,9 @@ install: build composer-install
 
 	docker-compose exec --user www-data php wp plugin install wordpress-seo --activate
 	docker-compose exec --user www-data php wp plugin install better-wp-security --activate
-	docker-compose exec --user www-data php wp plugin install ga-google-analytics --activate
-	docker-compose exec --user www-data php wp plugin install pixelyoursite --activate
+	docker-compose exec --user www-data php wp plugin install cookie-notice --activate
+	docker-compose exec --user www-data php wp plugin install backwpup --activate
+	docker-compose exec --user www-data php wp plugin install contact-form-7 --activate
 
 	# Clean tedious elements
 	docker-compose exec --user www-data php wp post delete 1 --force
