@@ -6,3 +6,5 @@ docker/data/mysql/5.7/*
 wp-content/debug.log
 /vendor
 wp-content/uploads
+wp-content/cache
+wp-content/et-cache
