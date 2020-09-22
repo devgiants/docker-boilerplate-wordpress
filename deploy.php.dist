@@ -7,7 +7,7 @@ require 'recipe/common.php';
 set('application', '${PROJECT_NAME}');
 
 // Project repository
-set('repository', '${PROJECT_REPO}');
+set('repository', 'git@github.com:${PROJECT_REPO}');
 
 // [Optional] Allocate tty for git clone. Default value is false.
 set('git_tty', true); 

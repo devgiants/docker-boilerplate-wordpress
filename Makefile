@@ -10,8 +10,21 @@ bash-php: up
 bash-php-root: up
 	docker-compose exec php bash
 
+install-complete: configure-wordpress
+	gh auth login
+	rm -rf .git
+	gh repo create ${PROJECT_REPO} --private -y
+	rm -rf ${PROJECT_REPO}
+	git clone git@github.com:${GITHUB_NAME}/${PROJECT_REPO}
+	mv ${PROJECT_REPO}/.git ./
+	rm -rf ${PROJECT_REPO}
+	git add .
+	git commit -m "Initial import"
+	git push origin master
+
+
 # Build app
-install: build composer-install
+configure-wordpress: build composer-install
 
 	set -o allexport
 	. ./.env
