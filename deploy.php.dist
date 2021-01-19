@@ -7,7 +7,7 @@ require 'recipe/common.php';
 set('application', '${PROJECT_NAME}');
 
 // Project repository
-set('repository', 'git@github.com:${PROJECT_REPO}');
+set('repository', 'git@github.com:${GITHUB_NAME}/${PROJECT_REPO}');
 
 // [Optional] Allocate tty for git clone. Default value is false.
 set('git_tty', true); 
@@ -53,7 +53,7 @@ after('deploy:failed', 'deploy:unlock');
 
 desc('Remove all uneeded files');
 task('remove', function () {
-	run("rm -rf {{release_path}}/docker {{release_path}}/.env {{release_path}}/deploy.php {{release_path}}/docker-compose.yml {{release_path}}/Makefile {{release_path}}/wp-cli.yml");
+	run("rm -rf {{release_path}}/docker {{release_path}}/.env {{release_path}}/.git* {{release_path}}/deploy.php {{release_path}}/docker-compose.yml {{release_path}}/Makefile {{release_path}}/wp-cli.yml");
 });
 after('cleanup', 'remove');
 
