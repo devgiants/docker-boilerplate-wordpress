@@ -49,6 +49,8 @@ configure-wordpress: build composer-install
 	docker-compose exec --user www-data php wp plugin install cookie-notice --activate
 	docker-compose exec --user www-data php wp plugin install backwpup --activate
 	docker-compose exec --user www-data php wp plugin install contact-form-7 --activate
+	docker-compose exec --user www-data php wp plugin install popups-for-divi --activate
+	docker-compose exec --user www-data php wp plugin install popup-maker --activate
 
 	# Clean tedious elements
 	docker-compose exec --user www-data php wp post delete 1 --force
