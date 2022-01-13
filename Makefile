@@ -22,9 +22,8 @@ install-complete: configure-wordpress
 	git commit -m "Initial import"
 	git push origin master
 
-
 # Build app
-configure-wordpress: build composer-install
+configure-wordpress: build
 
 	set -o allexport
 	. ./.env
@@ -61,26 +60,13 @@ configure-wordpress: build composer-install
 	docker-compose exec --user www-data php wp rewrite structure "/%postname%/" --hard
 	docker-compose exec --user www-data php wp rewrite flush --hard
 
-
-build-assets: up
-	docker-compose exec --user www-data php bash -c "cd ${WORDPRESS_HOST_RELATIVE_APP_PATH}/wp-content/themes/${PROJECT_NAME} && yarn install && yarn build:production"
-
-composer-install: up
-	# Install PHP dependencies
-	docker-compose exec -u www-data php composer install
-
-
 # Up containers
 up:
 	docker-compose up -d
-	docker-compose exec php usermod -u ${HOST_UID} www-data
-	docker-compose exec apache usermod -u ${HOST_UID} www-data
 
 # Up containers, with build forced
 build:
 	docker-compose up -d --build
-	docker-compose exec php usermod -u ${HOST_UID} www-data
-	docker-compose exec apache usermod -u ${HOST_UID} www-data
 
 # Down containers
 down:

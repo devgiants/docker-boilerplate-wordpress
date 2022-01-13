@@ -12,6 +12,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - ${MYSQL_HOST_VOLUME_PATH}:/var/lib/mysql
+      - ./docker/images/mysql/config:/etc/mysql/conf.d
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -22,11 +23,12 @@ services:
     environment:
       MYSQL_USERNAME: ${MYSQL_USER}
       MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      UPLOAD_LIMIT: 64M
 
   php:
     env_file: ./.env
     build:
-      context: docker/images/php-fpm7.3
+      context: docker/images/php-fpm7.4
       args:
         UID: ${HOST_UID}
         TIMEZONE: ${TIMEZONE}
