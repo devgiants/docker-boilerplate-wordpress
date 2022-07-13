@@ -61,6 +61,10 @@ configure-wordpress: build
 	docker-compose exec --user www-data php wp rewrite structure "/%postname%/" --hard
 	docker-compose exec --user www-data php wp rewrite flush --hard
 
+	# Add config parameters
+	docker-compose exec --user www-data php wp config set WP_AUTO_UPDATE_CORE false --raw
+	docker-compose exec --user www-data php wp config set WP_POST_REVISIONS 3 --raw
+
 # Up containers
 up:
 	docker-compose up -d
