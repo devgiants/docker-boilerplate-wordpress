@@ -51,6 +51,7 @@ configure-wordpress: build
 	docker-compose exec --user www-data php wp plugin install popups-for-divi --activate
 	docker-compose exec --user www-data php wp plugin install popup-maker --activate
 	docker-compose exec --user www-data php wp plugin install post-duplicator --activate
+	docker-compose exec --user www-data php wp plugin install supreme-modules-for-divi --activate
 
 	# Clean tedious elements
 	docker-compose exec --user www-data php wp post delete 1 --force
