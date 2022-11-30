@@ -7,7 +7,8 @@ ARG TIMEZONE
 ARG PROJECT_NAME
 
 RUN apt-get update && apt-get install -y \
-    default-mysql-client
+    default-mysql-client \
+    less
 
 # Set timezone
 RUN ln -snf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && echo ${TIMEZONE} > /etc/timezone \
