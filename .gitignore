@@ -1,3 +1,4 @@
+.env
 .idea
 docker/logs/apache/*
 docker/data/mysql/5.7/*
