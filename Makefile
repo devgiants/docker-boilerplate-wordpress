@@ -64,7 +64,7 @@ configure-wordpress: build
 
 	# Add config parameters
 	docker-compose exec --user www-data php wp config set WP_AUTO_UPDATE_CORE false --raw
-	docker-compose exec --user www-data php wp config set WP_POST_REVISIONS 3 --raw
+	docker-compose exec --user www-data php wp config set WP_POST_REVISIONS 5 --raw
 
 # Up containers
 up:
