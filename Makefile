@@ -47,7 +47,7 @@ configure-wordpress: build
 	docker-compose exec --user www-data php wp plugin install better-wp-security --activate
 	docker-compose exec --user www-data php wp plugin install cookie-notice --activate
 	docker-compose exec --user www-data php wp plugin install backwpup --activate
-	docker-compose exec --user www-data php wp plugin install contact-form-7 --activate
+	docker-compose exec --user www-data php wp plugin install wp-piwik --activate
 	docker-compose exec --user www-data php wp plugin install popups-for-divi --activate
 	docker-compose exec --user www-data php wp plugin install popup-maker --activate
 	docker-compose exec --user www-data php wp plugin install post-duplicator --activate
@@ -65,6 +65,7 @@ configure-wordpress: build
 	# Add config parameters
 	docker-compose exec --user www-data php wp config set WP_AUTO_UPDATE_CORE false --raw
 	docker-compose exec --user www-data php wp config set WP_POST_REVISIONS 5 --raw
+	docker-compose exec --user www-data php wp config set WP_DEBUG true --raw
 
 # Up containers
 up:
