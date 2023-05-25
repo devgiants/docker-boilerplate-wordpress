@@ -67,6 +67,9 @@ configure-wordpress: build
 	docker-compose exec --user www-data php wp config set WP_POST_REVISIONS 5 --raw
 	docker-compose exec --user www-data php wp config set WP_DEBUG true --raw
 
+search-replace: up
+	docker-compose exec --user www-data php wp search-replace `docker-compose exec --user www-data php wp option get siteurl` 'http://localhost:${APPLICATION_WEB_PORT}'
+
 # Up containers
 up:
 	docker-compose up -d
