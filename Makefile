@@ -41,7 +41,7 @@ install-complete: configure-wordpress
 	rm -rf ${PROJECT_REPO}
 	git add .
 	git commit -m "Initial import"
-	git push origin master
+	git push origin main
 
 # Build app
 configure-wordpress: build
