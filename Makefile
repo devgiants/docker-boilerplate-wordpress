@@ -10,6 +10,27 @@ bash-php: up
 bash-php-root: up
 	docker-compose exec php bash
 
+update-all: update-core update-plugins update-themes update-translations
+
+update-core: up
+	docker-compose exec -u www-data php wp core update
+	rm -rf wp-content/themes/twenty*
+	git add . && git commit -m "Update core"
+
+update-plugins: up
+	docker-compose exec -u www-data php wp plugin update --all
+	git add . && git commit -m "Update plugins"
+
+update-themes: up
+	docker-compose exec -u www-data php wp theme update --all
+	git add . && git commit -m "Update themes"
+
+update-translations: up
+	docker-compose exec -u www-data php wp language core update
+	docker-compose exec -u www-data php wp language plugin update --all
+	docker-compose exec -u www-data php wp language theme update --all
+	git add . && git commit -m "Update translations"
+
 install-complete: configure-wordpress
 	gh auth login
 	rm -rf .git
