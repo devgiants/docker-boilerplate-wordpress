@@ -11,7 +11,7 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
-      - ${MYSQL_HOST_VOLUME_PATH}:/var/lib/mysql
+      - database:/var/lib/mysql
       - ./docker/images/mysql/config:/etc/mysql/conf.d
 
   phpmyadmin:
@@ -54,3 +54,5 @@ services:
     links:
       - mysql
       - php
+volumes:
+  database:
