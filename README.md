@@ -6,7 +6,7 @@ __Warning : for Linux users only__.
 Use composer `create-project` command :
 
 ```
-composer create-project devgiants/docker-wordpress target-dir 1.6.0
+composer create-project devgiants/docker-wordpress target-dir 1.6.2
 ```
 
 This will clone the stack in your directory
