@@ -1,69 +1,44 @@
 <?php
 namespace Deployer;
 
-require 'recipe/common.php';
+require 'recipe/wordpress.php';
 
 // Project name
 set('application', '${PROJECT_NAME}');
 
-// Project repository
 set('repository', 'git@github.com:${GITHUB_NAME}/${PROJECT_REPO}');
 
-// [Optional] Allocate tty for git clone. Default value is false.
-set('git_tty', true); 
+set('git_tty', true);
 
-// Shared files/dirs between deploys 
 set('shared_files', ['wp-config.php', '.htaccess', '.htpasswd']);
 set('shared_dirs', ['wp-content/uploads', 'logs']);
-
-// Writable dirs by web server 
-set('writable_dirs', []);
-
+add('writable_dirs', []);
 
 // Hosts
-//host('yourproject.preprod')
-//	->stage('preprod')
-//	->set('branch', 'preprod')
-//    ->set('deploy_path', '/var/www/yourproject');
 
-//host('yourproject.prod')
-//	->stage('prod')
-//	->set('branch', 'master')
-//	->set('deploy_path', '/var/www/yourproject');
+host('prod')
+    ->set('branch', 'main')
+    ->set('hostname', 'hostname or ssh name')
+    ->set('deploy_path', '/var/www/yourproject');
 
-// Tasks
-desc('Deploy your project');
-task('deploy', [
-    'deploy:info',
-    'deploy:prepare',
-    'deploy:lock',
-    'deploy:release',
-    'deploy:update_code',
-    'deploy:shared',
-    'deploy:writable',
-    'deploy:clear_paths',
-    'deploy:symlink',
-    'deploy:unlock',
-    'cleanup',
-    'success'
-]);
+// Hooks
 
-// [Optional] If deploy fails automatically unlock.
 after('deploy:failed', 'deploy:unlock');
+
+task('deploy:writable')->disable();
 
 desc('Remove all uneeded files');
 task('remove', function () {
-	run("rm -rf {{release_path}}/docker {{release_path}}/.env {{release_path}}/.git* {{release_path}}/deploy.php {{release_path}}/docker-compose.yml {{release_path}}/Makefile {{release_path}}/wp-cli.yml*");
+    run("rm -rf {{release_path}}/docker {{release_path}}/.env {{release_path}}/.git* {{release_path}}/olddeploy.php {{release_path}}/docker-compose.yml {{release_path}}/Makefile {{release_path}}/wp-cli.yml*");
 });
-after('cleanup', 'remove');
+after('deploy:cleanup', 'remove');
 
 
-desc('Composer install');
-task('deploy:composer_install', function () {
-	run("cd '{{release_path}}'; composer install");
-});
-before('deploy:symlink', 'deploy:composer_install');
-
+//desc('Composer install');
+//task('deploy:composer_install', function () {
+//	run("cd '{{release_path}}'; composer install");
+//});
+//before('deploy:symlink', 'deploy:composer_install');
 
 // If ACF with automatic fields sync
 //desc('Update ACF fields from files');
