@@ -3,11 +3,11 @@
   "type": "project",
   "description": "Ready-To-Start LAMP stack with Wordpress, WP-CLI and PHPMyAdmin",
   "keywords": ["docker", "wordpress", "lamp", "wp-cli", "phpmyadmin"],
-  "homepage": "https://github.com/compagnie-hyperactive/docker-boilerplate-wordpress",
+  "homepage": "https://github.com/devgiants/docker-boilerplate-wordpress",
   "license": "MIT",
   "authors": [
     {
-      "name": "Nicolas BONNIOT",
+      "name": "Overflaw",
       "email": "nicolas@devgiants.fr"
     }
   ]

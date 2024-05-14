@@ -6,7 +6,7 @@ __Warning : for Linux users only__.
 Use composer `create-project` command :
 
 ```
-composer create-project devgiants/docker-wordpress target-dir 1.5.0
+composer create-project devgiants/docker-wordpress target-dir 1.6.0
 ```
 
 This will clone the stack in your directory
@@ -29,6 +29,9 @@ First of all, specify parameters needed for the project
 ##### Directories
 - __WORDPRESS_HOST_RELATIVE_APP_PATH__: This is the relative path from project initial path. Default to `./`. _Note: a volume will be created on this path in order to persist Wordpress app files_. 
 - __LOGS_DIR__: The logs directory.
+
+##### PHP
+- __PHP_VERSION__: the PHP version to use for stack
 
 ##### Host
 - __HOST_USER__: Your current username. Needed to ensure creation (directories...) with your current user to preserve mapping between container and host
