@@ -1,4 +1,3 @@
-version: '2'
 services:
   mysql:
     env_file: ./.env
