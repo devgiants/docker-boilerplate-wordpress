@@ -29,7 +29,7 @@ task('deploy:writable')->disable();
 
 desc('Remove all uneeded files');
 task('remove', function () {
-    run("rm -rf {{release_path}}/docker {{release_path}}/.env {{release_path}}/.git* {{release_path}}/olddeploy.php {{release_path}}/docker-compose.yml {{release_path}}/Makefile {{release_path}}/wp-cli.yml*");
+    run("rm -rf {{release_path}}/docker {{release_path}}/.env {{release_path}}/.git* {{release_path}}/deploy.php {{release_path}}/docker-compose.yml {{release_path}}/Makefile {{release_path}}/wp-cli.yml*");
 });
 after('deploy:cleanup', 'remove');
 
