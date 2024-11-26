@@ -1,10 +1,7 @@
-ARG TIMEZONE
 ARG PHP_VERSION
-
 FROM php:${PHP_VERSION}-fpm
 
-MAINTAINER Nicolas BONNIOT <nicolas@devgiants.fr>
-
+ARG TIMEZONE
 ARG UID
 
 RUN apt-get update && apt-get install -y \
