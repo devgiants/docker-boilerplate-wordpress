@@ -9,3 +9,5 @@ wp-content/debug.log
 wp-content/uploads
 wp-content/cache
 wp-content/et-cache
+wp-content/advanced-cache.php
+wp-content/wp-rocket-config
