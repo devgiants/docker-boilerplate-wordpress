@@ -31,6 +31,10 @@ update-translations: up
 	docker compose exec -u www-data php wp language theme update --all
 	git add . && git commit -m "Update translations"
 
+set_uploads_permissions: up
+	sudo chmod -R 775 wp-content/uploads
+	sudo chown -R ${HOST_USER}:www-data wp-content/uploads
+
 install-complete: configure-wordpress
 	gh auth login
 	rm -rf .git
