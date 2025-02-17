@@ -18,7 +18,7 @@ update-core: up
 	git add . && git commit -m "Update core"
 
 update-plugins: up
-	docker compose exec -u www-data php wp plugin update --all
+	docker compose exec -u www-data php wp plugin update --all --exclude=backwpup
 	git add . && git commit -m "Update plugins"
 
 update-themes: up
@@ -71,7 +71,7 @@ configure-wordpress: build
 	docker compose exec --user www-data php wp plugin install wordpress-seo --activate
 	docker compose exec --user www-data php wp plugin install better-wp-security --activate
 	docker compose exec --user www-data php wp plugin install cookie-notice --activate
-	docker compose exec --user www-data php wp plugin install backwpup --activate
+	docker compose exec --user www-data php wp plugin install backwpup --activate --version=4.1.7
 	docker compose exec --user www-data php wp plugin install wp-piwik --activate
 	docker compose exec --user www-data php wp plugin install popups-for-divi --activate
 	docker compose exec --user www-data php wp plugin install popup-maker --activate
