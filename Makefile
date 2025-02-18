@@ -68,6 +68,9 @@ configure-wordpress: build
 	# Install site
 	docker compose exec --user www-data php wp core install
 
+	docker compose exec --user www-data php wp option set siteurl http://localhost:${APPLICATION_WEB_PORT}
+	docker compose exec --user www-data php wp option set home http://localhost:${APPLICATION_WEB_PORT}
+
 	docker compose exec --user www-data php wp plugin install wordpress-seo --activate
 	docker compose exec --user www-data php wp plugin install better-wp-security --activate
 	docker compose exec --user www-data php wp plugin install cookie-notice --activate
