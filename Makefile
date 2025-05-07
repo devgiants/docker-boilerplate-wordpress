@@ -36,7 +36,7 @@ set_uploads_permissions: up
 	sudo chown -R ${HOST_USER}:www-data wp-content/uploads
 
 install-complete: configure-wordpress
-	gh auth login
+	# You mut be logged before with gh auth login
 	rm -rf .git
 	gh repo create ${PROJECT_REPO} --private -y
 	rm -rf ${PROJECT_REPO}
@@ -47,8 +47,16 @@ install-complete: configure-wordpress
 	git commit -m "Initial import"
 	git push origin main
 
+wait-db:
+	@echo "⏳ Waiting for database to be ready…"
+	@until docker compose exec -T mysql mysqladmin ping -h localhost --silent; do \
+	  echo "⏳ still waiting…"; \
+	  sleep 2; \
+	done
+	@echo "✅ Database is up!"
+
 # Build app
-configure-wordpress: build
+configure-wordpress: build wait-db
 
 	set -o allexport
 	. ./.env
