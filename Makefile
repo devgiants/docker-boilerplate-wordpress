@@ -104,7 +104,7 @@ configure-wordpress: build wait-db
 	docker compose exec --user www-data php wp config set WP_DEBUG true --raw
 
 search-replace: up
-	docker compose exec --user www-data php wp search-replace `docker compose exec --user www-data php wp option get siteurl` 'http://localhost:${APPLICATION_WEB_PORT}'
+	@SITE_URL=`docker compose exec --user www-data php wp option get siteurl` && docker compose exec --user www-data php wp search-replace "$$SITE_URL" "http://localhost:$(APPLICATION_WEB_PORT)"
 
 # Up containers
 up:
