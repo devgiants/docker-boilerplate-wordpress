@@ -101,7 +101,6 @@ configure-wordpress: build wait-db
 	# Add config parameters
 	docker compose exec --user www-data php wp config set WP_AUTO_UPDATE_CORE false --raw
 	docker compose exec --user www-data php wp config set WP_POST_REVISIONS 5 --raw
-	docker compose exec --user www-data php wp config set WP_DEBUG true --raw
 
 search-replace: up
 	@SITE_URL=`docker compose exec --user www-data php wp option get siteurl` && docker compose exec --user www-data php wp search-replace "$$SITE_URL" "http://localhost:$(APPLICATION_WEB_PORT)"
