@@ -108,7 +108,7 @@ search-replace: up
 
 # Up containers
 up:
-	docker compose up -d
+	docker compose up -d --wait
 
 # Up containers, with build forced
 build:

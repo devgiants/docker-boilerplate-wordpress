@@ -12,6 +12,11 @@ services:
     volumes:
       - database:/var/lib/mysql
       - ./docker/images/mysql/config:/etc/mysql/conf.d
+    healthcheck:
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
