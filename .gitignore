@@ -3,6 +3,7 @@
 docker/logs/apache/*
 docker/data/mysql/5.7/*
 .wp-cli
+wp-cli.yml
 .composer
 wp-content/debug.log
 /vendor
