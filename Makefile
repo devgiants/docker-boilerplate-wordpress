@@ -88,6 +88,7 @@ configure-wordpress: build wait-db
 	docker compose exec --user www-data php wp plugin install popup-maker --activate
 	docker compose exec --user www-data php wp plugin install post-duplicator --activate
 	docker compose exec --user www-data php wp plugin install supreme-modules-for-divi --activate
+	docker compose exec --user www-data php wp plugin install wp-mail-smtp --activate
 
 	# Clean tedious elements
 	docker compose exec --user www-data php wp post delete 1 --force
