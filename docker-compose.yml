@@ -13,10 +13,16 @@ services:
       - database:/var/lib/mysql
       - ./docker/images/mysql/config:/etc/mysql/conf.d
     healthcheck:
-      test: [ "CMD-SHELL", "mysqladmin ping -h localhost" ]
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h 127.0.0.1 -u root -p$${MYSQL_ROOT_PASSWORD} --silent"
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
+      start_period: 10s
+
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
