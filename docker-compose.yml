@@ -1,7 +1,7 @@
 services:
   mysql:
     env_file: ./.env
-    image: mysql:5.7
+    image: mariadb:${MARIADB_VERSION}
     ports:
       - ${MYSQL_HOST_PORT}:${MYSQL_PORT}
     environment:
