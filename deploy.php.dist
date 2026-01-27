@@ -11,7 +11,7 @@ set('repository', 'git@github.com:${GITHUB_NAME}/${PROJECT_REPO}');
 set('git_tty', true);
 
 set('shared_files', ['wp-config.php', '.htaccess', '.htpasswd']);
-set('shared_dirs', ['wp-content/uploads', 'logs']);
+set('shared_dirs', ['wp-content/uploads', 'logs', 'wp-content/et-cache']);
 add('writable_dirs', []);
 
 // Hosts
