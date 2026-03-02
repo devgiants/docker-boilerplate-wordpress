@@ -13,14 +13,11 @@ services:
       - database:/var/lib/mysql
       - ./docker/images/mysql/config:/etc/mysql/conf.d
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "mysqladmin ping -h 127.0.0.1 -u root -p$${MYSQL_ROOT_PASSWORD} --silent"
-        ]
-      interval: 5s
+      # use plain CMD and ping localhost so compose --wait recognizes service healthy
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 5
       start_period: 10s
 
 
