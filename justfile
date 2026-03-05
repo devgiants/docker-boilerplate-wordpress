@@ -57,7 +57,7 @@ install-and-version: configure-wordpress
 
 wait-db:
     @echo "Waiting for database to be ready..."
-    @bash -c 'until docker compose exec -T mysql mysqladmin ping -h localhost --silent; do echo "still waiting..."; sleep 2; done'
+    @bash -c 'until docker compose exec -T mysql mariadb-admin ping -h localhost --silent; do echo "still waiting..."; sleep 2; done'
     @echo "Database is up!"
 
 # Build app
@@ -111,9 +111,8 @@ search-replace: up
 # Requires DIVI_USERNAME and DIVI_API_KEY in environment or .env.
 set-divi-api-key: up
     @if [ -z "${DIVI_USERNAME:-}" ] || [ -z "${DIVI_API_KEY:-}" ]; then echo "DIVI_USERNAME and DIVI_API_KEY must be set (env or .env)." && exit 1; fi
-    docker compose exec --user www-data php wp option patch update et_automatic_updates_options username "${DIVI_USERNAME}"
-    docker compose exec --user www-data php wp option patch update et_automatic_updates_options api_key "${DIVI_API_KEY}"
-    docker compose exec --user www-data php wp option get et_automatic_updates_options --format=json
+    docker compose exec -e DIVI_USERNAME="${DIVI_USERNAME}" -e DIVI_API_KEY="${DIVI_API_KEY}" --user www-data php wp --skip-themes --skip-plugins eval '$value = get_option("et_automatic_updates_options"); if (!is_array($value)) { $value = []; } $value["username"] = getenv("DIVI_USERNAME"); $value["api_key"] = getenv("DIVI_API_KEY"); update_option("et_automatic_updates_options", $value);'
+    docker compose exec --user www-data php wp --skip-themes --skip-plugins option get et_automatic_updates_options --format=json
 
 # Up containers
 up:
