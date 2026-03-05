@@ -90,6 +90,8 @@ Set all values before first initialization.
 - `ADMIN_EMAIL`: initial admin email
 - `ADMIN_PASSWORD`: initial admin password (keep quotes if needed)
 - `WP_CLI_CACHE_DIR`: WP-CLI cache path
+- `DIVI_USERNAME`: Elegant Themes username (used by `just set-divi-api-key`)
+- `DIVI_API_KEY`: Elegant Themes API key (used by `just set-divi-api-key`)
 
 ### GitHub (used by `just install-complete`)
 
@@ -152,7 +154,10 @@ just update-translations
 just update-all
 just search-replace
 just set-uploads-permissions
+just set-divi-api-key
 ```
+
+`set-divi-api-key` writes Divi update credentials to the WordPress option `et_automatic_updates_options` using WP-CLI.
 
 ### Private Just overlays
 

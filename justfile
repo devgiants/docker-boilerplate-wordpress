@@ -107,6 +107,14 @@ configure-wordpress: build wait-db
 search-replace: up
     SITE_URL=$(docker compose exec --user www-data php wp option get siteurl) && docker compose exec --user www-data php wp search-replace "$SITE_URL" "http://localhost:${APPLICATION_WEB_PORT}"
 
+# Set Divi update credentials in WordPress options table.
+# Requires DIVI_USERNAME and DIVI_API_KEY in environment or .env.
+set-divi-api-key: up
+    @if [ -z "${DIVI_USERNAME:-}" ] || [ -z "${DIVI_API_KEY:-}" ]; then echo "DIVI_USERNAME and DIVI_API_KEY must be set (env or .env)." && exit 1; fi
+    docker compose exec --user www-data php wp option patch update et_automatic_updates_options username "${DIVI_USERNAME}"
+    docker compose exec --user www-data php wp option patch update et_automatic_updates_options api_key "${DIVI_API_KEY}"
+    docker compose exec --user www-data php wp option get et_automatic_updates_options --format=json
+
 # Up containers
 up:
     docker compose up -d --wait
