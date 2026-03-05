@@ -87,17 +87,49 @@ set-uploads-permissions: up
     sudo chmod -R 775 wp-content/uploads
     sudo chown -R ${HOST_USER}:www-data wp-content/uploads
 
-install-and-version: configure-wordpress
-    # You must be logged in first with gh auth login
-    rm -rf .git
-    gh repo create ${PROJECT_REPO} --private -y
-    rm -rf ${PROJECT_REPO}
-    git clone git@github.com:${GITHUB_NAME}/${PROJECT_REPO}
-    mv ${PROJECT_REPO}/.git ./
-    rm -rf ${PROJECT_REPO}
-    git add .
-    git commit -m "Initial import"
-    git push origin main
+install-and-version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    if docker compose exec -T --user www-data php wp core is-installed >/dev/null 2>&1; then
+      echo "WordPress is already installed, skipping configure-wordpress."
+    else
+      just configure-wordpress
+    fi
+
+    if [[ -d .git ]]; then
+      echo "Git repository already initialized, skipping GitHub bootstrap."
+      exit 0
+    fi
+
+    if [[ -z "${GITHUB_NAME:-}" || -z "${PROJECT_REPO:-}" ]]; then
+      echo "GITHUB_NAME and PROJECT_REPO must be set."
+      exit 1
+    fi
+
+    if ! gh auth status >/dev/null 2>&1; then
+      echo "You must be logged in first with gh auth login."
+      exit 1
+    fi
+
+    if gh repo view "${GITHUB_NAME}/${PROJECT_REPO}" >/dev/null 2>&1; then
+      echo "GitHub repo ${GITHUB_NAME}/${PROJECT_REPO} already exists."
+    else
+      gh repo create "${PROJECT_REPO}" --private -y
+    fi
+
+    git init
+    git checkout -B main
+    git remote add origin "git@github.com:${GITHUB_NAME}/${PROJECT_REPO}"
+    git add -A
+
+    if ! git diff --cached --quiet; then
+      git commit -m "Initial import"
+    else
+      git commit --allow-empty -m "Initial import"
+    fi
+
+    git push -u origin main
 
 wait-db:
     @echo "Waiting for database to be ready..."
@@ -106,19 +138,21 @@ wait-db:
 
 # Build app
 configure-wordpress: build wait-db
+    # Skip full bootstrap if WordPress is already installed.
+    @if docker compose exec -T --user www-data php wp core is-installed >/dev/null 2>&1; then echo "WordPress already installed, skipping configure-wordpress."; exit 0; fi
+
     # Substitute env vars in files
-    envsubst < ./wp-cli.yml.dist > ./wp-cli.yml
-    envsubst < ./deploy.php.dist > ./deploy.php
-    rm ./wp-cli.yml.dist ./deploy.php.dist
+    @if [ -f ./wp-cli.yml.dist ]; then envsubst < ./wp-cli.yml.dist > ./wp-cli.yml; rm ./wp-cli.yml.dist; fi
+    @if [ -f ./deploy.php.dist ]; then envsubst < ./deploy.php.dist > ./deploy.php; rm ./deploy.php.dist; fi
 
     # Install WP
     docker compose exec --user www-data php wp core download
 
     # Create wp-config using wp-cli.yml file
-    docker compose exec --user www-data php wp config create
+    @if [ ! -f ./wp-config.php ]; then docker compose exec --user www-data php wp config create; else echo "wp-config.php already exists, skipping creation."; fi
 
     # Install site
-    docker compose exec --user www-data php wp core install
+    @if ! docker compose exec -T --user www-data php wp core is-installed >/dev/null 2>&1; then docker compose exec --user www-data php wp core install; else echo "WordPress already installed, skipping core install."; fi
 
     docker compose exec --user www-data php wp option set siteurl http://localhost:${APPLICATION_WEB_PORT}
     docker compose exec --user www-data php wp option set home http://localhost:${APPLICATION_WEB_PORT}

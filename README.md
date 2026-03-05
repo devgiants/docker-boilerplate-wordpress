@@ -192,7 +192,7 @@ deploy-prod:
 just install-and-version
 ```
 
-`install-and-version` assumes you are authenticated with GitHub CLI (`gh auth login`) and rewrites local git history/remote setup for the target repo.
+`install-and-version` assumes you are authenticated with GitHub CLI (`gh auth login`), bootstraps WordPress/GitHub/Git on first run, and skips GitHub bootstrap if the local git repo is already initialized.
 
 ## Access URLs
 
