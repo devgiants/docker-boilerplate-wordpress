@@ -151,7 +151,30 @@ just update-themes
 just update-translations
 just update-all
 just search-replace
-just set_uploads_permissions
+just set-uploads-permissions
+```
+
+### Private Just overlays
+
+The root `justfile` can optionally import extra local files:
+
+- `justfile.local`
+- `justfile.private`
+- `justfile.user`
+
+Role of this feature:
+- keep personal/team-specific recipes out of the shared `justfile`
+- avoid committing private automation (local credentials, shortcuts, machine-specific tasks)
+- extend project commands without changing versioned project files
+
+These files are ignored by git via `justfile.*`.
+
+Example:
+
+```just
+# justfile.private (not committed)
+deploy-prod:
+    ./scripts/deploy-prod.sh
 ```
 
 ### Repository bootstrap helper

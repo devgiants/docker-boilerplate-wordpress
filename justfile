@@ -1,6 +1,11 @@
 set dotenv-load := true
 set export := true
 
+# Optional local overlays for private/non-versioned recipes.
+import? 'justfile.local'
+import? 'justfile.private'
+import? 'justfile.user'
+
 # Provides a bash in PHP container (user www-data)
 bash-php: up
     docker compose exec -u www-data php bash
