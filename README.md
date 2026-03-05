@@ -155,9 +155,11 @@ just update-all
 just search-replace
 just set-uploads-permissions
 just set-divi-api-key
+just erase-all
 ```
 
 `set-divi-api-key` writes Divi update credentials to the WordPress option `et_automatic_updates_options` using WP-CLI.
+`erase-all` is a destructive test helper: it stops/removes the compose stack, removes compose volumes, and deletes `${GITHUB_NAME}/${PROJECT_REPO}` on GitHub. It asks for an inline `YES` confirmation before running.
 
 ### Private Just overlays
 
@@ -208,6 +210,12 @@ docker compose down
 
 ```bash
 just configure-wordpress
+```
+
+For full test reset (including remote GitHub repo deletion), use:
+
+```bash
+just erase-all
 ```
 
 ## Notes

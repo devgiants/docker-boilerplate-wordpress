@@ -114,6 +114,14 @@ set-divi-api-key: up
     docker compose exec -e DIVI_USERNAME="${DIVI_USERNAME}" -e DIVI_API_KEY="${DIVI_API_KEY}" --user www-data php wp --skip-themes --skip-plugins eval '$value = get_option("et_automatic_updates_options"); if (!is_array($value)) { $value = []; } $value["username"] = getenv("DIVI_USERNAME"); $value["api_key"] = getenv("DIVI_API_KEY"); update_option("et_automatic_updates_options", $value);'
     docker compose exec --user www-data php wp --skip-themes --skip-plugins option get et_automatic_updates_options --format=json
 
+# Destroy local stack and data, then delete remote GitHub repository.
+# Requires gh authentication.
+erase-all:
+    @bash -c 'echo "WARNING: This will remove compose containers/volumes and delete ${GITHUB_NAME}/${PROJECT_REPO} on GitHub."; printf "Type YES to continue: "; read -r confirm; [ "$confirm" = "YES" ] || { echo "Aborted."; exit 1; }'
+    @if [ -z "${GITHUB_NAME:-}" ] || [ -z "${PROJECT_REPO:-}" ]; then echo "GITHUB_NAME and PROJECT_REPO must be set."; exit 1; fi
+    docker compose down --volumes --remove-orphans
+    @if gh repo view "${GITHUB_NAME}/${PROJECT_REPO}" >/dev/null 2>&1; then gh repo delete "${GITHUB_NAME}/${PROJECT_REPO}" --yes; else echo "GitHub repo ${GITHUB_NAME}/${PROJECT_REPO} not found, skipping."; fi
+
 # Up containers
 up:
     docker compose up -d --wait
