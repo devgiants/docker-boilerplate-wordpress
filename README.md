@@ -166,6 +166,7 @@ just erase-all
 `set-divi-api-key` writes Divi update credentials to the WordPress option `et_automatic_updates_options` using WP-CLI.
 `warmup-updates` emulates authenticated wp-admin page loads + front-office hits + cron triggers to refresh update metadata (same effect as manual BO/FO navigation).
 `update-themes` and `update-plugins` call this warmup automatically before applying updates (`THEME_UPDATE_RECHECK_PASSES` / `PLUGIN_UPDATE_RECHECK_PASSES`).
+If WordPress update metadata is stale, both recipes also query Elegant Themes API directly as a fallback.
 `erase-all` is a destructive test helper: it stops/removes the compose stack, removes compose volumes, and deletes `${GITHUB_NAME}/${PROJECT_REPO}` on GitHub. It asks for an inline `YES` confirmation before running.
 
 ### Private Just overlays

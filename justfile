@@ -136,7 +136,61 @@ update-plugins: up
     set -euo pipefail
     recheck_passes="${PLUGIN_UPDATE_RECHECK_PASSES:-${UPDATE_WARMUP_PASSES:-5}}"
     sleep_seconds="${UPDATE_WARMUP_SLEEP_SECONDS:-2}"
+    et_updates=()
+
+    fetch_et_plugin_updates() {
+      local php_code
+      php_code='define("WP_ADMIN", true);'
+      php_code+=$'\n''require "/var/www/html/wp-load.php";'
+      php_code+=$'\n''require_once ABSPATH . "wp-admin/includes/plugin.php";'
+      php_code+=$'\n''$o = get_site_option("et_automatic_updates_options", []); if (!$o) { $o = get_option("et_automatic_updates_options", []); }'
+      php_code+=$'\n''$plugins = []; foreach (get_plugins() as $file => $plugin) { $update_uri = isset($plugin["UpdateURI"]) ? (string) $plugin["UpdateURI"] : ""; if ($update_uri !== "" && strpos($update_uri, "elegantthemes.com") === false) { continue; } $plugins[$file] = (string) $plugin["Version"]; }'
+      php_code+=$'\n''$body = ["action" => "check_all_plugins_updates", "installed_plugins" => $plugins, "class_version" => (defined("ET_CORE_VERSION") ? ET_CORE_VERSION : "1.2")];'
+      php_code+=$'\n''$user = isset($o["username"]) ? (string) $o["username"] : ""; $key = isset($o["api_key"]) ? (string) $o["api_key"] : "";'
+      php_code+=$'\n''if ($user !== "" && $key !== "") { $body["automatic_updates"] = "on"; $body["username"] = urlencode($user); $body["api_key"] = $key; }'
+      php_code+=$'\n''$r = wp_remote_post("https://www.elegantthemes.com/api/api.php", ["timeout" => 20, "body" => $body, "headers" => ["rate_limit" => "false"], "user-agent" => "WordPress/" . get_bloginfo("version") . "; Plugin Updates/" . (defined("ET_CORE_VERSION") ? ET_CORE_VERSION : "1.2") . "; " . home_url("/")]);'
+      php_code+=$'\n''if (is_wp_error($r)) { echo "ERROR|" . $r->get_error_message(); return; }'
+      php_code+=$'\n''if (wp_remote_retrieve_response_code($r) !== 200) { echo "ERROR|HTTP_" . wp_remote_retrieve_response_code($r); return; }'
+      php_code+=$'\n''$data = maybe_unserialize(wp_remote_retrieve_body($r)); if (!is_array($data)) { echo "ERROR|invalid_response"; return; }'
+      php_code+=$'\n''$updates = [];'
+      php_code+=$'\n''foreach ($data as $plugin_file => $plugin_data) {'
+      php_code+=$'\n''  if (!is_array($plugin_data) && !is_object($plugin_data)) { continue; }'
+      php_code+=$'\n''  $new_version = is_array($plugin_data) ? (isset($plugin_data["new_version"]) ? (string) $plugin_data["new_version"] : "") : (isset($plugin_data->new_version) ? (string) $plugin_data->new_version : "");'
+      php_code+=$'\n''  $package = is_array($plugin_data) ? (isset($plugin_data["package"]) ? (string) $plugin_data["package"] : "") : (isset($plugin_data->package) ? (string) $plugin_data->package : "");'
+      php_code+=$'\n''  if ($new_version === "" || $package === "") { continue; }'
+      php_code+=$'\n''  $installed_version = isset($plugins[$plugin_file]) ? (string) $plugins[$plugin_file] : "";'
+      php_code+=$'\n''  if ($installed_version !== "" && version_compare($installed_version, $new_version, ">=")) { continue; }'
+      php_code+=$'\n''  $updates[] = [$plugin_file, $installed_version, $new_version, $package];'
+      php_code+=$'\n''}'
+      php_code+=$'\n''if (empty($updates)) { echo "NO_UPDATE|"; return; }'
+      php_code+=$'\n''foreach ($updates as $u) { echo "UPDATE|" . $u[0] . "|" . $u[1] . "|" . $u[2] . "|" . $u[3] . "\n"; }'
+      docker compose exec -T -u www-data php php -r "$php_code"
+    }
+
     just warmup-updates plugins "$recheck_passes" "$sleep_seconds"
+
+    et_result="$(fetch_et_plugin_updates || true)"
+    while IFS= read -r line; do
+      [[ -z "$line" ]] && continue
+      status="${line%%|*}"
+      rest="${line#*|}"
+
+      if [[ "$status" == "UPDATE" ]]; then
+        IFS='|' read -r plugin_file installed_version target_version package_url <<< "${rest}"
+        echo "ET API plugin update detected: ${plugin_file} (${installed_version} -> ${target_version})"
+        et_updates+=("${plugin_file}|${target_version}|${package_url}")
+      elif [[ "$status" == "ERROR" ]]; then
+        echo "ET API plugin check error: ${rest}"
+      fi
+    done <<< "$et_result"
+
+    if (( ${#et_updates[@]} > 0 )); then
+      for item in "${et_updates[@]}"; do
+        IFS='|' read -r plugin_file target_version package_url <<< "$item"
+        echo "Installing ET plugin package for ${plugin_file} (${target_version})..."
+        docker compose exec -T -u www-data php wp plugin install "$package_url" --force
+      done
+    fi
 
     echo "Plugins with updates currently visible to WordPress:"
     docker compose exec -T -u www-data php wp plugin list --update=available || true
@@ -155,6 +209,30 @@ update-themes: up
     set -euo pipefail
     recheck_passes="${THEME_UPDATE_RECHECK_PASSES:-${UPDATE_WARMUP_PASSES:-5}}"
     sleep_seconds="${UPDATE_WARMUP_SLEEP_SECONDS:-2}"
+    et_divi_package_url=""
+    et_divi_target_version=""
+
+    fetch_divi_update_info() {
+      local php_code
+      php_code='define("WP_ADMIN", true);'
+      php_code+=$'\n''require "/var/www/html/wp-load.php";'
+      php_code+=$'\n''$o = get_site_option("et_automatic_updates_options", []); if (!$o) { $o = get_option("et_automatic_updates_options", []); }'
+      php_code+=$'\n''$themes = wp_get_themes(); $installed = []; foreach ($themes as $slug => $theme) { $installed[$slug] = (string) $theme->get("Version"); }'
+      php_code+=$'\n''$body = ["action" => "check_theme_updates", "installed_themes" => $installed, "class_version" => (defined("ET_CORE_VERSION") ? ET_CORE_VERSION : "1.0")];'
+      php_code+=$'\n''$user = isset($o["username"]) ? (string) $o["username"] : ""; $key = isset($o["api_key"]) ? (string) $o["api_key"] : "";'
+      php_code+=$'\n''if ($user !== "" && $key !== "") { $body["automatic_updates"] = "on"; $body["username"] = urlencode($user); $body["api_key"] = $key; }'
+      php_code+=$'\n''$r = wp_remote_post("https://www.elegantthemes.com/api/api.php", ["timeout" => 20, "body" => $body, "headers" => ["rate_limit" => "false"], "user-agent" => "WordPress/" . get_bloginfo("version") . "; Theme Updates/" . (defined("ET_CORE_VERSION") ? ET_CORE_VERSION : "1.0") . "; " . home_url("/")]);'
+      php_code+=$'\n''if (is_wp_error($r)) { echo "ERROR|" . $r->get_error_message(); return; }'
+      php_code+=$'\n''if (wp_remote_retrieve_response_code($r) !== 200) { echo "ERROR|HTTP_" . wp_remote_retrieve_response_code($r); return; }'
+      php_code+=$'\n''$data = maybe_unserialize(wp_remote_retrieve_body($r));'
+      php_code+=$'\n''if (!is_array($data) || empty($data["Divi"])) { echo "NO_UPDATE|"; return; }'
+      php_code+=$'\n''$divi = $data["Divi"]; $new = isset($divi["new_version"]) ? (string) $divi["new_version"] : ""; $pkg = isset($divi["package"]) ? (string) $divi["package"] : "";'
+      php_code+=$'\n''if ($new === "" || $pkg === "") { echo "NO_UPDATE|"; return; }'
+      php_code+=$'\n''$installed = isset($installed["Divi"]) ? (string) $installed["Divi"] : "";'
+      php_code+=$'\n''if ($installed !== "" && version_compare($installed, $new, ">=")) { echo "NO_UPDATE|"; return; }'
+      php_code+=$'\n''echo "UPDATE|" . $new . "|" . $pkg;'
+      docker compose exec -T -u www-data php php -r "$php_code"
+    }
 
     divi_version="$(docker compose exec -T -u www-data php wp theme get Divi --field=version 2>/dev/null || true)"
     if [[ -n "$divi_version" ]]; then
@@ -164,6 +242,18 @@ update-themes: up
     fi
 
     just warmup-updates themes "$recheck_passes" "$sleep_seconds"
+
+    et_result="$(fetch_divi_update_info || true)"
+    et_status="${et_result%%|*}"
+    et_rest="${et_result#*|}"
+    if [[ "$et_status" == "UPDATE" ]]; then
+      et_divi_target_version="${et_rest%%|*}"
+      et_divi_package_url="${et_rest#*|}"
+      echo "ET API Divi update detected: ${et_divi_target_version}"
+      docker compose exec -T -u www-data php wp theme install "$et_divi_package_url" --force
+    elif [[ "$et_status" == "ERROR" ]]; then
+      echo "ET API Divi check error: ${et_rest}"
+    fi
 
     echo "Themes with updates currently visible to WordPress:"
     docker compose exec -T -u www-data php wp theme list --update=available || true
