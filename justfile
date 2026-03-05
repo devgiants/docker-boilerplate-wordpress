@@ -32,13 +32,37 @@ update-themes: up
     #!/usr/bin/env bash
     set -euo pipefail
     recheck_passes="${THEME_UPDATE_RECHECK_PASSES:-5}"
+    detected=0
+    divi_package_url=""
+    divi_target_version=""
+
+    fetch_divi_update_info() {
+      local php_code
+      php_code='define("WP_ADMIN", true);'
+      php_code+=$'\n''define("WP_USE_THEMES", false);'
+      php_code+=$'\n''require "/var/www/html/wp-load.php";'
+      php_code+=$'\n''$o = get_site_option("et_automatic_updates_options", []); if (!$o) { $o = get_option("et_automatic_updates_options", []); }'
+      php_code+=$'\n''$themes = wp_get_themes(); $installed = []; foreach ($themes as $slug => $theme) { $installed[$slug] = (string) $theme->get("Version"); }'
+      php_code+=$'\n''$body = ["action" => "check_theme_updates", "installed_themes" => $installed, "class_version" => (defined("ET_CORE_VERSION") ? ET_CORE_VERSION : "1.0")];'
+      php_code+=$'\n''$user = isset($o["username"]) ? (string) $o["username"] : ""; $key = isset($o["api_key"]) ? (string) $o["api_key"] : "";'
+      php_code+=$'\n''if ($user !== "" && $key !== "") { $body["automatic_updates"] = "on"; $body["username"] = urlencode($user); $body["api_key"] = $key; }'
+      php_code+=$'\n''$r = wp_remote_post("https://www.elegantthemes.com/api/api.php", ["timeout" => 20, "body" => $body, "headers" => ["rate_limit" => "false"], "user-agent" => "WordPress/" . get_bloginfo("version") . "; Theme Updates/" . (defined("ET_CORE_VERSION") ? ET_CORE_VERSION : "1.0") . "; " . home_url("/")]);'
+      php_code+=$'\n''if (is_wp_error($r)) { echo "ERROR|" . $r->get_error_message(); return; }'
+      php_code+=$'\n''if (wp_remote_retrieve_response_code($r) !== 200) { echo "ERROR|HTTP_" . wp_remote_retrieve_response_code($r); return; }'
+      php_code+=$'\n''$data = maybe_unserialize(wp_remote_retrieve_body($r));'
+      php_code+=$'\n''if (!is_array($data) || empty($data["Divi"])) { echo "NO_UPDATE|"; return; }'
+      php_code+=$'\n''$divi = $data["Divi"]; $new = isset($divi["new_version"]) ? (string) $divi["new_version"] : ""; $pkg = isset($divi["package"]) ? (string) $divi["package"] : "";'
+      php_code+=$'\n''if ($new === "" || $pkg === "") { echo "NO_UPDATE|"; return; }'
+      php_code+=$'\n''echo "UPDATE|" . $new . "|" . $pkg;'
+      docker compose exec -T -u www-data php php -r "$php_code"
+    }
 
     if ! [[ "$recheck_passes" =~ ^[1-9][0-9]*$ ]]; then
       echo "Invalid THEME_UPDATE_RECHECK_PASSES='$recheck_passes' (expected positive integer)."
       exit 1
     fi
 
-    divi_version="$(docker compose exec -T -u www-data php wp --skip-plugins theme get Divi --field=version 2>/dev/null || true)"
+    divi_version="$(docker compose exec -T -u www-data php wp theme get Divi --field=version 2>/dev/null || true)"
     if [[ -n "$divi_version" ]]; then
       echo "Divi current version: $divi_version"
     else
@@ -47,25 +71,45 @@ update-themes: up
 
     for pass in $(seq 1 "$recheck_passes"); do
       echo "Forcing theme update check (pass ${pass}/${recheck_passes})..."
-      docker compose exec -T -u www-data php wp --skip-plugins eval '
-      if (!function_exists("wp_update_themes")) { require_once ABSPATH . "wp-admin/includes/update.php"; }
-      if (!function_exists("set_current_screen")) { require_once ABSPATH . "wp-admin/includes/screen.php"; }
-      if (function_exists("set_current_screen")) { set_current_screen("dashboard"); }
-      do_action("admin_init");
-      delete_site_transient("update_themes");
-      wp_clean_themes_cache(true);
-      wp_update_themes();
-      ' >/dev/null
+      result="$(fetch_divi_update_info || true)"
+      status="${result%%|*}"
+      rest="${result#*|}"
 
-      if docker compose exec -T -u www-data php wp --skip-plugins theme list --update=available --field=name | grep -qx "Divi"; then
-        echo "Divi update detected."
+      if [[ "$status" == "UPDATE" ]]; then
+        divi_target_version="${rest%%|*}"
+        divi_package_url="${rest#*|}"
+        echo "Divi update detected: ${divi_target_version}"
+        detected=1
         break
       fi
+
+      if [[ "$status" == "ERROR" ]]; then
+        echo "Divi API check error: ${rest}"
+      fi
+
+      docker compose exec -T -u www-data php wp cron event run --due-now >/dev/null 2>&1 || true
 
       sleep 2
     done
 
-    docker compose exec -u www-data php wp --skip-plugins theme update --all
+    if [[ "$detected" -eq 1 && -n "$divi_package_url" ]]; then
+      echo "Installing Divi package from Elegant Themes API..."
+      docker compose exec -T -u www-data php wp theme install "$divi_package_url" --force
+    else
+      echo "Divi update not detected after ${recheck_passes} checks."
+      echo "Current Divi credentials option:"
+      docker compose exec -T -u www-data php wp option get et_automatic_updates_options --format=json || true
+      echo "Themes with updates currently visible to WordPress:"
+      docker compose exec -T -u www-data php wp theme list --update=available || true
+    fi
+
+    docker compose exec -u www-data php wp theme update --all
+
+    updated_divi_version="$(docker compose exec -T -u www-data php wp theme get Divi --field=version 2>/dev/null || true)"
+    if [[ -n "$updated_divi_version" ]]; then
+      echo "Divi version after update: $updated_divi_version"
+    fi
+
     git add -A
     if ! git diff --cached --quiet; then
       git commit -m "Update themes"
@@ -96,6 +140,10 @@ install-and-version:
     else
       just configure-wordpress
     fi
+
+    # Enforce debug flags on every run, including already-installed stacks.
+    docker compose exec --user www-data php wp config set WP_DEBUG false --raw
+    docker compose exec --user www-data php wp config set WP_DEBUG_LOG false --raw
 
     if [[ -d .git ]]; then
       echo "Git repository already initialized, skipping GitHub bootstrap."
@@ -179,6 +227,8 @@ configure-wordpress: build wait-db
     docker compose exec --user www-data php wp rewrite flush --hard
 
     # Add config parameters
+    docker compose exec --user www-data php wp config set WP_DEBUG false --raw
+    docker compose exec --user www-data php wp config set WP_DEBUG_LOG false --raw
     docker compose exec --user www-data php wp config set WP_AUTO_UPDATE_CORE false --raw
     docker compose exec --user www-data php wp config set WP_POST_REVISIONS 5 --raw
 
@@ -189,7 +239,7 @@ search-replace: up
 # Requires DIVI_USERNAME and DIVI_API_KEY in environment or .env.
 set-divi-api-key: up
     @if [ -z "${DIVI_USERNAME:-}" ] || [ -z "${DIVI_API_KEY:-}" ]; then echo "DIVI_USERNAME and DIVI_API_KEY must be set (env or .env)." && exit 1; fi
-    docker compose exec -e DIVI_USERNAME="${DIVI_USERNAME}" -e DIVI_API_KEY="${DIVI_API_KEY}" --user www-data php wp --skip-themes --skip-plugins eval '$value = get_option("et_automatic_updates_options"); if (!is_array($value)) { $value = []; } $value["username"] = getenv("DIVI_USERNAME"); $value["api_key"] = getenv("DIVI_API_KEY"); update_option("et_automatic_updates_options", $value);'
+    docker compose exec -e DIVI_USERNAME="${DIVI_USERNAME}" -e DIVI_API_KEY="${DIVI_API_KEY}" --user www-data php wp --skip-themes --skip-plugins eval '$user = getenv("DIVI_USERNAME"); $key = getenv("DIVI_API_KEY"); $value = get_option("et_automatic_updates_options"); if (!is_array($value)) { $value = []; } $value["username"] = $user; $value["api_key"] = $key; $value["apikey"] = $key; update_option("et_automatic_updates_options", $value); $epanel = get_option("et_epanel"); if (is_array($epanel)) { $epanel["et_username"] = $user; $epanel["et_api_key"] = $key; update_option("et_epanel", $epanel); }'
     docker compose exec --user www-data php wp --skip-themes --skip-plugins option get et_automatic_updates_options --format=json
 
 # Destroy local stack and data, then delete remote GitHub repository.
