@@ -92,7 +92,10 @@ Set all values before first initialization.
 - `WP_CLI_CACHE_DIR`: WP-CLI cache path
 - `DIVI_USERNAME`: Elegant Themes username (used by `just set-divi-api-key`)
 - `DIVI_API_KEY`: Elegant Themes API key (used by `just set-divi-api-key`)
-- `THEME_UPDATE_RECHECK_PASSES`: number of forced update-check passes in `just update-themes` (default `5`)
+- `THEME_UPDATE_RECHECK_PASSES`: number of HTTP warmup passes before `just update-themes` (default `5`)
+- `PLUGIN_UPDATE_RECHECK_PASSES`: number of HTTP warmup passes before `just update-plugins` (default `5`)
+- `UPDATE_WARMUP_PASSES`: fallback warmup pass count if specific vars above are not set (default `5`)
+- `UPDATE_WARMUP_SLEEP_SECONDS`: delay between warmup passes (default `2`)
 
 ### GitHub (used by `just install-and-version`)
 
@@ -151,6 +154,7 @@ just bash-php-root  # Shell in PHP container as root
 just update-core
 just update-plugins
 just update-themes
+just warmup-updates
 just update-translations
 just update-all
 just search-replace
@@ -160,7 +164,8 @@ just erase-all
 ```
 
 `set-divi-api-key` writes Divi update credentials to the WordPress option `et_automatic_updates_options` using WP-CLI.
-`update-themes` forces a configurable number of theme update checks before running updates (use `THEME_UPDATE_RECHECK_PASSES`).
+`warmup-updates` emulates authenticated wp-admin page loads + front-office hits + cron triggers to refresh update metadata (same effect as manual BO/FO navigation).
+`update-themes` and `update-plugins` call this warmup automatically before applying updates (`THEME_UPDATE_RECHECK_PASSES` / `PLUGIN_UPDATE_RECHECK_PASSES`).
 `erase-all` is a destructive test helper: it stops/removes the compose stack, removes compose volumes, and deletes `${GITHUB_NAME}/${PROJECT_REPO}` on GitHub. It asks for an inline `YES` confirmation before running.
 
 ### Private Just overlays

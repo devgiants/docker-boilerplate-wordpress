@@ -23,44 +23,138 @@ update-core: up
     git add -A
     @if ! git diff --cached --quiet; then git commit -m "Update core"; else echo "No core updates to commit."; fi
 
+warmup-updates target='both' passes='5' sleep_seconds='2':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    target="{{target}}"
+    passes="{{passes}}"
+    sleep_seconds="{{sleep_seconds}}"
+    app_url="http://localhost:${APPLICATION_WEB_PORT}"
+
+    if ! command -v curl >/dev/null 2>&1; then
+      echo "curl not found, skipping HTTP warmup."
+      exit 0
+    fi
+
+    if [[ -z "${ADMIN_USER:-}" || -z "${ADMIN_PASSWORD:-}" ]]; then
+      echo "ADMIN_USER or ADMIN_PASSWORD missing, skipping HTTP warmup."
+      exit 0
+    fi
+
+    if ! [[ "$passes" =~ ^[1-9][0-9]*$ ]]; then
+      echo "Invalid warmup passes '$passes' (expected positive integer)."
+      exit 1
+    fi
+
+    if ! [[ "$sleep_seconds" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+      echo "Invalid warmup sleep_seconds '$sleep_seconds' (expected number)."
+      exit 1
+    fi
+
+    case "$target" in
+      plugins)
+        admin_paths=("/wp-admin/" "/wp-admin/plugins.php" "/wp-admin/update-core.php")
+        ;;
+      themes)
+        admin_paths=("/wp-admin/" "/wp-admin/themes.php" "/wp-admin/update-core.php")
+        ;;
+      both)
+        admin_paths=("/wp-admin/" "/wp-admin/plugins.php" "/wp-admin/themes.php" "/wp-admin/update-core.php")
+        ;;
+      *)
+        echo "Invalid warmup target '$target' (expected plugins|themes|both)."
+        exit 1
+        ;;
+    esac
+
+    front_paths=("/")
+    cookie_file="$(mktemp)"
+    cleanup() {
+      rm -f "$cookie_file"
+    }
+    trap cleanup EXIT
+
+    request_url() {
+      local url="$1"
+      local mode="${2:-public}"
+      local http_code
+
+      if [[ "$mode" == "auth" ]]; then
+        http_code="$(curl -sS -L -o /dev/null -w "%{http_code}" -b "$cookie_file" -c "$cookie_file" "$url" || echo "000")"
+      else
+        http_code="$(curl -sS -L -o /dev/null -w "%{http_code}" "$url" || echo "000")"
+      fi
+
+      if [[ "$http_code" == "404" ]]; then
+        echo "HTTP 404 during warmup: $url"
+      elif [[ "$http_code" =~ ^[45][0-9][0-9]$ ]]; then
+        echo "HTTP $http_code during warmup: $url"
+      fi
+    }
+
+    if ! curl -fsS -c "$cookie_file" "${app_url}/wp-login.php" >/dev/null; then
+      echo "Unable to reach wp-login.php, skipping HTTP warmup."
+      exit 0
+    fi
+
+    if ! curl -fsS -L -b "$cookie_file" -c "$cookie_file" \
+      --data-urlencode "log=${ADMIN_USER}" \
+      --data-urlencode "pwd=${ADMIN_PASSWORD}" \
+      --data-urlencode "rememberme=forever" \
+      --data-urlencode "wp-submit=Log In" \
+      --data-urlencode "redirect_to=${app_url}/wp-admin/" \
+      --data-urlencode "testcookie=1" \
+      "${app_url}/wp-login.php" >/dev/null; then
+      echo "Admin login request failed, skipping HTTP warmup."
+      exit 0
+    fi
+
+    if ! grep -q "wordpress_logged_in_" "$cookie_file"; then
+      echo "Admin login cookie not found, skipping HTTP warmup."
+      exit 0
+    fi
+
+    for pass in $(seq 1 "$passes"); do
+      echo "HTTP warmup pass ${pass}/${passes} (${target})..."
+
+      for path in "${admin_paths[@]}"; do
+        request_url "${app_url}${path}" auth
+      done
+
+      for path in "${front_paths[@]}"; do
+        request_url "${app_url}${path}" public
+      done
+
+      request_url "${app_url}/wp-cron.php?doing_wp_cron=$(date +%s)" public
+      docker compose exec -T -u www-data php wp cron event run --due-now >/dev/null 2>&1 || true
+
+      sleep "$sleep_seconds"
+    done
+
 update-plugins: up
+    #!/usr/bin/env bash
+    set -euo pipefail
+    recheck_passes="${PLUGIN_UPDATE_RECHECK_PASSES:-${UPDATE_WARMUP_PASSES:-5}}"
+    sleep_seconds="${UPDATE_WARMUP_SLEEP_SECONDS:-2}"
+    just warmup-updates plugins "$recheck_passes" "$sleep_seconds"
+
+    echo "Plugins with updates currently visible to WordPress:"
+    docker compose exec -T -u www-data php wp plugin list --update=available || true
+
     docker compose exec -u www-data php wp plugin update --all --exclude=backwpup
+
     git add -A
-    @if ! git diff --cached --quiet; then git commit -m "Update plugins"; else echo "No plugin updates to commit."; fi
+    if ! git diff --cached --quiet; then
+      git commit -m "Update plugins"
+    else
+      echo "No plugin updates to commit."
+    fi
 
 update-themes: up
     #!/usr/bin/env bash
     set -euo pipefail
-    recheck_passes="${THEME_UPDATE_RECHECK_PASSES:-5}"
-    detected=0
-    divi_package_url=""
-    divi_target_version=""
-
-    fetch_divi_update_info() {
-      local php_code
-      php_code='define("WP_ADMIN", true);'
-      php_code+=$'\n''define("WP_USE_THEMES", false);'
-      php_code+=$'\n''require "/var/www/html/wp-load.php";'
-      php_code+=$'\n''$o = get_site_option("et_automatic_updates_options", []); if (!$o) { $o = get_option("et_automatic_updates_options", []); }'
-      php_code+=$'\n''$themes = wp_get_themes(); $installed = []; foreach ($themes as $slug => $theme) { $installed[$slug] = (string) $theme->get("Version"); }'
-      php_code+=$'\n''$body = ["action" => "check_theme_updates", "installed_themes" => $installed, "class_version" => (defined("ET_CORE_VERSION") ? ET_CORE_VERSION : "1.0")];'
-      php_code+=$'\n''$user = isset($o["username"]) ? (string) $o["username"] : ""; $key = isset($o["api_key"]) ? (string) $o["api_key"] : "";'
-      php_code+=$'\n''if ($user !== "" && $key !== "") { $body["automatic_updates"] = "on"; $body["username"] = urlencode($user); $body["api_key"] = $key; }'
-      php_code+=$'\n''$r = wp_remote_post("https://www.elegantthemes.com/api/api.php", ["timeout" => 20, "body" => $body, "headers" => ["rate_limit" => "false"], "user-agent" => "WordPress/" . get_bloginfo("version") . "; Theme Updates/" . (defined("ET_CORE_VERSION") ? ET_CORE_VERSION : "1.0") . "; " . home_url("/")]);'
-      php_code+=$'\n''if (is_wp_error($r)) { echo "ERROR|" . $r->get_error_message(); return; }'
-      php_code+=$'\n''if (wp_remote_retrieve_response_code($r) !== 200) { echo "ERROR|HTTP_" . wp_remote_retrieve_response_code($r); return; }'
-      php_code+=$'\n''$data = maybe_unserialize(wp_remote_retrieve_body($r));'
-      php_code+=$'\n''if (!is_array($data) || empty($data["Divi"])) { echo "NO_UPDATE|"; return; }'
-      php_code+=$'\n''$divi = $data["Divi"]; $new = isset($divi["new_version"]) ? (string) $divi["new_version"] : ""; $pkg = isset($divi["package"]) ? (string) $divi["package"] : "";'
-      php_code+=$'\n''if ($new === "" || $pkg === "") { echo "NO_UPDATE|"; return; }'
-      php_code+=$'\n''echo "UPDATE|" . $new . "|" . $pkg;'
-      docker compose exec -T -u www-data php php -r "$php_code"
-    }
-
-    if ! [[ "$recheck_passes" =~ ^[1-9][0-9]*$ ]]; then
-      echo "Invalid THEME_UPDATE_RECHECK_PASSES='$recheck_passes' (expected positive integer)."
-      exit 1
-    fi
+    recheck_passes="${THEME_UPDATE_RECHECK_PASSES:-${UPDATE_WARMUP_PASSES:-5}}"
+    sleep_seconds="${UPDATE_WARMUP_SLEEP_SECONDS:-2}"
 
     divi_version="$(docker compose exec -T -u www-data php wp theme get Divi --field=version 2>/dev/null || true)"
     if [[ -n "$divi_version" ]]; then
@@ -69,39 +163,10 @@ update-themes: up
       echo "Divi theme not found."
     fi
 
-    for pass in $(seq 1 "$recheck_passes"); do
-      echo "Forcing theme update check (pass ${pass}/${recheck_passes})..."
-      result="$(fetch_divi_update_info || true)"
-      status="${result%%|*}"
-      rest="${result#*|}"
+    just warmup-updates themes "$recheck_passes" "$sleep_seconds"
 
-      if [[ "$status" == "UPDATE" ]]; then
-        divi_target_version="${rest%%|*}"
-        divi_package_url="${rest#*|}"
-        echo "Divi update detected: ${divi_target_version}"
-        detected=1
-        break
-      fi
-
-      if [[ "$status" == "ERROR" ]]; then
-        echo "Divi API check error: ${rest}"
-      fi
-
-      docker compose exec -T -u www-data php wp cron event run --due-now >/dev/null 2>&1 || true
-
-      sleep 2
-    done
-
-    if [[ "$detected" -eq 1 && -n "$divi_package_url" ]]; then
-      echo "Installing Divi package from Elegant Themes API..."
-      docker compose exec -T -u www-data php wp theme install "$divi_package_url" --force
-    else
-      echo "Divi update not detected after ${recheck_passes} checks."
-      echo "Current Divi credentials option:"
-      docker compose exec -T -u www-data php wp option get et_automatic_updates_options --format=json || true
-      echo "Themes with updates currently visible to WordPress:"
-      docker compose exec -T -u www-data php wp theme list --update=available || true
-    fi
+    echo "Themes with updates currently visible to WordPress:"
+    docker compose exec -T -u www-data php wp theme list --update=available || true
 
     docker compose exec -u www-data php wp theme update --all
 
