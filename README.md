@@ -1,100 +1,188 @@
-# Ready-To-Start LAMP stack with Wordpress, WP-CLI and PHPMyAdmin
-This boilerplate is a ready-to-start customizable LAMP stack with Wordpress, WP-CLI and PHPMyAdmin integration. 
-__Warning : for Linux users only__.
+# Docker WordPress Boilerplate (Apache, PHP-FPM, MariaDB, WP-CLI, phpMyAdmin)
 
-## Installation
-Use composer `create-project` command :
+[![Latest tag](https://img.shields.io/github/v/tag/devgiants/docker-boilerplate-wordpress?sort=semver)](https://github.com/devgiants/docker-boilerplate-wordpress/tags)
 
+A ready-to-start Docker boilerplate for WordPress projects with:
+- Apache 2.4 + PHP-FPM
+- MariaDB
+- WP-CLI
+- phpMyAdmin
+- Task automation with `just`
+
+## Quick Start
+
+Create a new project from this template:
+
+```bash
+composer create-project devgiants/docker-wordpress target-dir
 ```
-composer create-project devgiants/docker-wordpress target-dir 2.1.3
+
+Without a version constraint, Composer installs the latest stable release.
+
+If you want `HEAD` of `main`, use:
+
+```bash
+composer create-project devgiants/docker-wordpress target-dir dev-main
 ```
 
-This will clone the stack in your directory
+Then go into your project directory and update `.env`.
 
-### Requirements
+## Prerequisites
 
-**Mac users** : During installation, the script requires the use of envsubst which is not installed by default on MacOS. You can install it directly with Homebrew:
+- Docker + Docker Compose plugin (`docker compose` command)
+- `just` (task runner)
+- `composer` (only needed if you bootstrap with `composer create-project`)
+- `envsubst`
 
+### Install `just`
+
+Use your preferred package manager:
+
+```bash
+# macOS (Homebrew)
+brew install just
+
+# Rust toolchain (cross-platform)
+cargo install just
+
+# Ubuntu/Debian (if available in your repos)
+sudo apt install just
 ```
+
+If your distro package is unavailable/outdated, use `cargo install just`.
+
+### Install `envsubst`
+
+On macOS:
+
+```bash
 brew install gettext
-brew link --force gettext 
+brew link --force gettext
 ```
 
-## Configuration
-### Custom parameters
+On most Linux distros, `envsubst` is provided by `gettext`.
 
-#### .env file
-First of all, specify parameters needed for the project
+## Configuration (`.env`)
 
-##### Directories
-- __WORDPRESS_HOST_RELATIVE_APP_PATH__: This is the relative path from project initial path. Default to `./`. _Note: a volume will be created on this path in order to persist Wordpress app files_. 
-- __LOGS_DIR__: The logs directory.
+Set all values before first initialization.
 
-##### PHP
-- __PHP_VERSION__: the PHP version to use for stack
+### Directories
 
-##### Host
-- __HOST_USER__: Your current username. Needed to ensure creation (directories...) with your current user to preserve mapping between container and host
-- __HOST_UID__: Your current user host ID (uid). This is mandatory to map the UID between PHP container and host, in order to let you edit files both in container an through host volume access.
-- __HOST_GID__: Your current main group host ID (gid). (Not used so far)
+- `WORDPRESS_HOST_RELATIVE_APP_PATH`: host path mounted to `/var/www/html` (default `./`)
+- `LOGS_DIR`: Apache logs directory on host
 
-##### Wordpress
-- __PROJECT_NAME__: The project name : used as Wordpress site name. __IMPORTANT : as this is used for setting the theme directory as well, keep this name with underscores (i.e : project_test)__
-- __ADMIN_USER__: the first user to be created
-- __ADMIN_PASSWORD__: the first user password. __IMPORTANT: Keep it enclosed with double quotes__.
-- __PROJECT_REPO__: the git repo address
+### Runtime
 
-- __WP_CLI_CACHE_DIR__: WP-CLI cache directory. Leave it this way.
+- `PHP_VERSION`: PHP version used to build the PHP container
+- `MARIADB_VERSION`: MariaDB image tag
+- `TIMEZONE`: container timezone
 
-##### Database
-- __MYSQL_HOST__: The database host. Has to be equal to database container name in `docker-compose.yml` file (default `mysql`).    
-- __MYSQL_DATABASE__: The database name you want
-- __MYSQL_DATABASE_PREFIX__: THe database prefix you want for your Wordpress installation
-- __MYSQL_USER__: THe database user you want to use (will be created on container creation)
-- __MYSQL_PASSWORD__: the database password you want 
-- __MYSQL_HOST_PORT__: the host port you want to bind Mysql Server in container to. 
-- __MYSQL_PORT__: the MySQL instance port. Careful, this is the MySQL port __in container__. Default to `3306`  
-- __MYSQL_HOST_VOLUME_PATH__: default `./docker/data/mysql/5.7`. This is the volume which will store database.
+### Host Mapping
 
-##### Ports    
+- `HOST_USER`: your host username
+- `HOST_UID`: your host UID (used for file ownership mapping)
+- `HOST_GID`: your host GID
 
-You can have multiple projects using this boilerplate, but without changing ports, only one project can be up at a time, because port 80 is used to expose Apache.
+### WordPress
 
-- __APPLICATION_WEB_PORT__: default to `80`.
-- __PHP_MY_ADMIN_PORT__: default to `81`.
+- `PROJECT_NAME`: WordPress site title
+- `ADMIN_USER`: initial admin username
+- `ADMIN_EMAIL`: initial admin email
+- `ADMIN_PASSWORD`: initial admin password (keep quotes if needed)
+- `WP_CLI_CACHE_DIR`: WP-CLI cache path
 
+### GitHub (used by `just install-complete`)
+
+- `GITHUB_NAME`: GitHub owner/org
+- `PROJECT_REPO`: GitHub repository name
+
+### Database
+
+- `MYSQL_HOST`: DB host (`mysql` by default, must match compose service name)
+- `MYSQL_DATABASE`: DB name
+- `MYSQL_DATABASE_PREFIX`: WordPress table prefix
+- `MYSQL_USER`: DB user
+- `MYSQL_PASSWORD`: DB password
+- `MYSQL_HOST_PORT`: host port mapped to DB
+- `MYSQL_PORT`: DB port inside container (default `3306`)
+
+### Ports
+
+- `APPLICATION_WEB_PORT`: Apache exposed port (default `80`)
+- `PHP_MY_ADMIN_PORT`: phpMyAdmin exposed port (default `81`)
 
 ## Usage
-There are 2 ways to use this : __initialisation__ and __day-to-day usage__. A `Makefile` is created to help manipulate things
-### Initialisation
 
-#### Blank project
-Just execute `make install` to completly setup blank project. Please look to other entry points in `Makefile` to see what you can do
+List available recipes:
 
-#### Project with Sage 9 theme
+```bash
+just --list
+```
 
-Just execute `make sage` to set a complete project with Sage 9.
+### Initial project setup
 
-### Day-to-day usage
+```bash
+just configure-wordpress
+```
 
-- Execute `make up` for bringing project live
-- Execute `make down` for stopping and removing container instances.
-- Execute `make bash-php` for a shell in PHP container with `www-data` user.
+This recipe:
+- builds/starts containers
+- waits for DB readiness
+- generates `wp-cli.yml` and `deploy.php` from `.dist` templates
+- installs/configures WordPress
+- installs a default plugin set
 
+### Day-to-day commands
 
-_Note : All volumes set will ensure to persist both app files and database._
+```bash
+just up             # Start containers
+just down           # Stop containers
+just build          # Rebuild + start containers
+just bash-php       # Shell in PHP container as www-data
+just bash-php-root  # Shell in PHP container as root
+```
 
-### Reset from scratch
-If you want to reset everything, just
-1. Run `docker-compose down`.
-2. Remove the __WORDPRESS_HOST_RELATIVE_APP_PATH__ and the __MYSQL_HOST_VOLUME_PATH__.
-3. Then goes back on `make install`.
+### Maintenance commands
 
-### Wordpress
-Accessible on `localhost` by default.
+```bash
+just update-core
+just update-plugins
+just update-themes
+just update-translations
+just update-all
+just search-replace
+just set_uploads_permissions
+```
 
-Important note : to execute wp-cli, __be sure to connect to php container with www-data user__. The mapping described above targets www-data on container.
-Command to use : `make bash-php`
+### Repository bootstrap helper
 
-### PhpMyAdmin
-Accessible on `localhost:81` by default. Use `MYSQL_USER` and `MYSQL_PASSWORD` to connect.
+```bash
+just install-complete
+```
+
+`install-complete` assumes you are authenticated with GitHub CLI (`gh auth login`) and rewrites local git history/remote setup for the target repo.
+
+## Access URLs
+
+- WordPress: `http://localhost:${APPLICATION_WEB_PORT}` (default `http://localhost`)
+- phpMyAdmin: `http://localhost:${PHP_MY_ADMIN_PORT}` (default `http://localhost:81`)
+
+## Reset From Scratch
+
+1. Stop containers:
+
+```bash
+docker compose down
+```
+
+2. Remove WordPress files and DB data using the paths configured in `.env`.
+3. Re-run initialization:
+
+```bash
+just configure-wordpress
+```
+
+## Notes
+
+- WP-CLI commands should generally be run as `www-data` inside the PHP container.
+- `configure-wordpress` consumes template files (`wp-cli.yml.dist`, `deploy.php.dist`) by generating runtime files and removing `.dist` files.
