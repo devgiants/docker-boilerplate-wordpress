@@ -43,7 +43,7 @@ set-uploads-permissions: up
     sudo chmod -R 775 wp-content/uploads
     sudo chown -R ${HOST_USER}:www-data wp-content/uploads
 
-install-complete: configure-wordpress
+install-and-version: configure-wordpress
     # You must be logged in first with gh auth login
     rm -rf .git
     gh repo create ${PROJECT_REPO} --private -y

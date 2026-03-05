@@ -93,7 +93,7 @@ Set all values before first initialization.
 - `DIVI_USERNAME`: Elegant Themes username (used by `just set-divi-api-key`)
 - `DIVI_API_KEY`: Elegant Themes API key (used by `just set-divi-api-key`)
 
-### GitHub (used by `just install-complete`)
+### GitHub (used by `just install-and-version`)
 
 - `GITHUB_NAME`: GitHub owner/org
 - `PROJECT_REPO`: GitHub repository name
@@ -185,10 +185,10 @@ deploy-prod:
 ### Repository bootstrap helper
 
 ```bash
-just install-complete
+just install-and-version
 ```
 
-`install-complete` assumes you are authenticated with GitHub CLI (`gh auth login`) and rewrites local git history/remote setup for the target repo.
+`install-and-version` assumes you are authenticated with GitHub CLI (`gh auth login`) and rewrites local git history/remote setup for the target repo.
 
 ## Access URLs
 
