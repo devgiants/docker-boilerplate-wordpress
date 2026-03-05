@@ -92,6 +92,7 @@ Set all values before first initialization.
 - `WP_CLI_CACHE_DIR`: WP-CLI cache path
 - `DIVI_USERNAME`: Elegant Themes username (used by `just set-divi-api-key`)
 - `DIVI_API_KEY`: Elegant Themes API key (used by `just set-divi-api-key`)
+- `THEME_UPDATE_RECHECK_PASSES`: number of forced update-check passes in `just update-themes` (default `5`)
 
 ### GitHub (used by `just install-and-version`)
 
@@ -159,6 +160,7 @@ just erase-all
 ```
 
 `set-divi-api-key` writes Divi update credentials to the WordPress option `et_automatic_updates_options` using WP-CLI.
+`update-themes` forces a configurable number of theme update checks before running updates (use `THEME_UPDATE_RECHECK_PASSES`).
 `erase-all` is a destructive test helper: it stops/removes the compose stack, removes compose volumes, and deletes `${GITHUB_NAME}/${PROJECT_REPO}` on GitHub. It asks for an inline `YES` confirmation before running.
 
 ### Private Just overlays
