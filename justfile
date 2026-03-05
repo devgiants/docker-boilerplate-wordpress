@@ -27,6 +27,8 @@ update-plugins: up
     git add . && git commit -m "Update plugins"
 
 update-themes: up
+    # Force refresh of theme update metadata so premium updates (e.g. Divi) are detected immediately.
+    docker compose exec -u www-data php wp eval 'delete_site_transient("update_themes"); wp_clean_themes_cache(true); wp_update_themes();'
     docker compose exec -u www-data php wp theme update --all
     git add . && git commit -m "Update themes"
 
