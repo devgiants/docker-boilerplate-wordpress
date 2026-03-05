@@ -31,7 +31,10 @@ update-translations: up
     docker compose exec -u www-data php wp language theme update --all
     git add . && git commit -m "Update translations"
 
-set_uploads_permissions: up
+set-uploads-permissions: up
+    # Acceptable tradeoff for security and ease of use in development environment, 
+    # especially when using containers with both sides writing to the same files.
+    # In production, you should set more restrictive permissions.
     sudo chmod -R 775 wp-content/uploads
     sudo chown -R ${HOST_USER}:www-data wp-content/uploads
 
