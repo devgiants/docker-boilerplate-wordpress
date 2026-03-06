@@ -166,7 +166,11 @@ just erase-all
 `set-divi-api-key` writes Divi update credentials to the WordPress option `et_automatic_updates_options` using WP-CLI.
 `warmup-updates` emulates authenticated wp-admin page loads + front-office hits + cron triggers to refresh update metadata (same effect as manual BO/FO navigation).
 `update-themes` and `update-plugins` call this warmup automatically before applying updates (`THEME_UPDATE_RECHECK_PASSES` / `PLUGIN_UPDATE_RECHECK_PASSES`).
-If WordPress update metadata is stale, both recipes also query Elegant Themes API directly as a fallback.
+Core recipes can execute optional hooks when present:
+- `update-themes-pre-hook`
+- `update-themes-post-hook`
+- `update-plugins-pre-hook`
+- `update-plugins-post-hook`
 `erase-all` is a destructive test helper: it stops/removes the compose stack, removes compose volumes, and deletes `${GITHUB_NAME}/${PROJECT_REPO}` on GitHub. It asks for an inline `YES` confirmation before running.
 
 ### Private Just overlays
@@ -181,6 +185,7 @@ Role of this feature:
 - keep personal/team-specific recipes out of the shared `justfile`
 - avoid committing private automation (local credentials, shortcuts, machine-specific tasks)
 - extend project commands without changing versioned project files
+- inject project-specific update logic (for example Divi/Elegant Themes fallbacks) via the optional hook recipes listed above
 
 These files are ignored by git via `justfile.*`.
 
