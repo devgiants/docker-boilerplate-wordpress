@@ -53,13 +53,13 @@ warmup-updates target='both' passes='5' sleep_seconds='2':
 
     case "$target" in
       plugins)
-        admin_paths=("/wp-admin/" "/wp-admin/plugins.php" "/wp-admin/update-core.php")
+        admin_paths=("/${BO_URL}/" "/${BO_URL}/plugins.php" "/${BO_URL}/update-core.php")
         ;;
       themes)
-        admin_paths=("/wp-admin/" "/wp-admin/themes.php" "/wp-admin/update-core.php")
+        admin_paths=("/${BO_URL}/" "/${BO_URL}/themes.php" "/${BO_URL}/update-core.php")
         ;;
       both)
-        admin_paths=("/wp-admin/" "/wp-admin/plugins.php" "/wp-admin/themes.php" "/wp-admin/update-core.php")
+        admin_paths=("/${BO_URL}/" "/${BO_URL}/plugins.php" "/${BO_URL}/themes.php" "/${BO_URL}/update-core.php")
         ;;
       *)
         echo "Invalid warmup target '$target' (expected plugins|themes|both)."
@@ -102,7 +102,7 @@ warmup-updates target='both' passes='5' sleep_seconds='2':
       --data-urlencode "pwd=${ADMIN_PASSWORD}" \
       --data-urlencode "rememberme=forever" \
       --data-urlencode "wp-submit=Log In" \
-      --data-urlencode "redirect_to=${app_url}/wp-admin/" \
+      --data-urlencode "redirect_to=${app_url}/${BO_URL}/" \
       --data-urlencode "testcookie=1" \
       "${app_url}/wp-login.php" >/dev/null; then
       echo "Admin login request failed, skipping HTTP warmup."
@@ -296,6 +296,45 @@ configure-wordpress: build wait-db
     docker compose exec --user www-data php wp config set WP_DEBUG_LOG false --raw
     docker compose exec --user www-data php wp config set WP_AUTO_UPDATE_CORE false --raw
     docker compose exec --user www-data php wp config set WP_POST_REVISIONS 5 --raw
+
+
+
+# Import a specific SQL dump file into MYSQL_DATABASE on container MYSQL_HOST.
+import-db-file dump_file: up
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    : "${MYSQL_HOST:?MYSQL_HOST is required}"
+    : "${MYSQL_DATABASE:?MYSQL_DATABASE is required}"
+
+    dump_file="{{dump_file}}"
+    if [[ ! -f "$dump_file" ]]; then
+      echo "Dump file not found: ${dump_file}" >&2
+      exit 1
+    fi
+
+    mysql_user="${MYSQL_USER:-root}"
+    mysql_password="${MYSQL_PASSWORD:-${MYSQL_ROOT_PASSWORD:-}}"
+    mysql_cmd=(mysql -u"${mysql_user}")
+    if [[ -n "$mysql_password" ]]; then
+      mysql_cmd=(mysql -u"${mysql_user}" "-p${mysql_password}")
+    fi
+
+    echo "Dropping existing tables in ${MYSQL_DATABASE} (if any)..."
+    drop_sql=$'SET SESSION group_concat_max_len = 1000000;\nSET FOREIGN_KEY_CHECKS = 0;\nSET @tables = NULL;\nSELECT GROUP_CONCAT(CONCAT(\'`\', table_name, \'`\')) INTO @tables FROM information_schema.tables WHERE table_schema = DATABASE();\nSET @tables = IFNULL(@tables, \'\');\nSET @stmt = IF(@tables = \'\', \'SELECT 1\', CONCAT(\'DROP TABLE \', @tables));\nPREPARE drop_stmt FROM @stmt;\nEXECUTE drop_stmt;\nDEALLOCATE PREPARE drop_stmt;\nSET FOREIGN_KEY_CHECKS = 1;'
+    docker compose exec -T "${MYSQL_HOST}" "${mysql_cmd[@]}" "${MYSQL_DATABASE}" -e "$drop_sql"
+
+    echo "Importing ${dump_file} into ${MYSQL_DATABASE} on service ${MYSQL_HOST}..."
+    if [[ "$dump_file" == *.sql.gz ]]; then
+      zcat "$dump_file" | docker compose exec -T "${MYSQL_HOST}" "${mysql_cmd[@]}" "${MYSQL_DATABASE}"
+    elif [[ "$dump_file" == *.sql ]]; then
+      docker compose exec -T "${MYSQL_HOST}" "${mysql_cmd[@]}" "${MYSQL_DATABASE}" < "$dump_file"
+    else
+      echo "Unsupported dump format: ${dump_file} (expected .sql or .sql.gz)" >&2
+      exit 1
+    fi
+
+    echo "Database import completed."
 
 search-replace: up
     SITE_URL=$(docker compose exec --user www-data php wp option get siteurl) && docker compose exec --user www-data php wp search-replace "$SITE_URL" "http://localhost:${APPLICATION_WEB_PORT}"

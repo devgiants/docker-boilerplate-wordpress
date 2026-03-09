@@ -89,6 +89,7 @@ Set all values before first initialization.
 - `ADMIN_USER`: initial admin username
 - `ADMIN_EMAIL`: initial admin email
 - `ADMIN_PASSWORD`: initial admin password (keep quotes if needed)
+- `BO_URL`: back-office path slug used for authenticated warmup requests (for example `wp-admin`); set it without leading/trailing slash
 - `WP_CLI_CACHE_DIR`: WP-CLI cache path
 - `DIVI_USERNAME`: Elegant Themes username (used by `just set-divi-api-key`)
 - `DIVI_API_KEY`: Elegant Themes API key (used by `just set-divi-api-key`)
@@ -164,7 +165,7 @@ just erase-all
 ```
 
 `set-divi-api-key` writes Divi update credentials to the WordPress option `et_automatic_updates_options` using WP-CLI.
-`warmup-updates` emulates authenticated wp-admin page loads + front-office hits + cron triggers to refresh update metadata (same effect as manual BO/FO navigation).
+`warmup-updates` emulates authenticated back-office page loads (`/${BO_URL}/`) + front-office hits + cron triggers to refresh update metadata (same effect as manual BO/FO navigation).
 `update-themes` and `update-plugins` call this warmup automatically before applying updates (`THEME_UPDATE_RECHECK_PASSES` / `PLUGIN_UPDATE_RECHECK_PASSES`).
 Core recipes can execute optional hooks when present:
 - `update-themes-pre-hook`
