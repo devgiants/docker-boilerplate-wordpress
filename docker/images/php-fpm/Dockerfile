@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
 
 # Set timezone
 RUN ln -snf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && echo ${TIMEZONE} > /etc/timezone \
-&& printf '[PHP]\ndate.timezone = "%s"\n', ${TIMEZONE} > /usr/local/etc/php/conf.d/tzone.ini \
+&& printf '[PHP]\ndate.timezone = "%s"\n' "${TIMEZONE}" > /usr/local/etc/php/conf.d/tzone.ini \
 && "date"
 
 # Type docker-php-ext-install to see available extensions
@@ -29,4 +29,3 @@ RUN usermod -u ${UID} www-data
 WORKDIR /var/www/html
 
 EXPOSE 9000
-
