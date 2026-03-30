@@ -206,6 +206,127 @@ just install-and-version
 
 `install-and-version` assumes you are authenticated with GitHub CLI (`gh auth login`), bootstraps WordPress/GitHub/Git on first run, and skips GitHub bootstrap if the local git repo is already initialized.
 
+## Tools (`tools/`)
+
+The `tools/` directory contains helper scripts that are not part of the main `just` workflow.
+
+### `check_wordpress_state.py`
+
+This script compares a local WordPress instance against production and returns a non-zero exit code only when a blocking mismatch is detected.
+
+What it checks:
+- admin login through the hidden back-office slug (`/${BO_URL}/`) and final access to `/wp-admin/`
+- page-by-page comparison between production and local URLs
+- `<title>` equality
+- first `<h1>` equality
+- visible text similarity
+- HTML similarity after basic normalization (URLs, scripts, styles)
+
+Files:
+- `tools/check_wordpress_state.py`: executable Python script
+- `tools/check_wordpress_state.example.json`: sample JSON configuration
+
+Recommended workflow:
+
+1. Make sure the local stack is up and the site is reachable.
+2. Run the checker in the mode that matches your migration/update context.
+3. Review the `SUMMARY` block first, then inspect page-level details only if the summary is `WARN` or `FAIL`.
+4. If needed, rerun with explicit paths for the pages that matter most to the project.
+
+Basic usage:
+
+```bash
+./tools/check_wordpress_state.py \
+  --prod-base https://example.com \
+  --local-port 8080 \
+  --bo-url hidden-admin-slug \
+  --admin-user admin \
+  --admin-password 'replace-me' \
+  --path / \
+  --path /sample-page/
+```
+
+Usage with a project `.env`:
+
+```bash
+set -a
+source .env
+set +a
+./tools/check_wordpress_state.py --mode visual-ish
+```
+
+Usage with a JSON config file:
+
+```bash
+cp tools/check_wordpress_state.example.json /tmp/check-wordpress-state.json
+$EDITOR /tmp/check-wordpress-state.json
+./tools/check_wordpress_state.py --config /tmp/check-wordpress-state.json
+```
+
+Configuration sources are resolved in this order: CLI options, JSON config, environment variables, then script defaults.
+
+Supported environment variables:
+- `PROD_SITE_URL`
+- `LOCAL_BASE_URL`
+- `APPLICATION_WEB_PORT`
+- `BO_URL`
+- `ADMIN_USER`
+- `ADMIN_PASSWORD`
+- `CHECK_TIMEOUT`
+- `CHECK_USER_AGENT`
+- `CHECK_MODE`
+- `CHECK_MIN_HTML_SIMILARITY`
+- `CHECK_MIN_TEXT_SIMILARITY`
+
+Important behavior:
+- if `--local-base` is omitted, the script builds `http://localhost:<port>` from `--local-port` or `APPLICATION_WEB_PORT`
+- if no paths are provided, it falls back to the hard-coded defaults in the script; these sample paths are project-specific and should usually be overridden
+- `strict` mode is the default: HTML similarity is enforced in addition to title/H1/text checks
+- `visual-ish` mode ignores low HTML similarity when visible text still matches closely
+
+Recommended modes:
+- `strict`: use for classic updates where you expect the DOM to stay close to production
+- `visual-ish`: use for builders/framework migrations such as Divi 4 -> Divi 5, where rendered content may stay stable while DOM structure changes heavily
+
+Examples:
+
+```bash
+# Strict comparison with explicit thresholds.
+./tools/check_wordpress_state.py \
+  --config /tmp/check-wordpress-state.json \
+  --mode strict \
+  --min-html-similarity 0.95 \
+  --min-text-similarity 0.98
+```
+
+```bash
+# Divi 5 / strong DOM drift: prioritize visible text over raw HTML.
+./tools/check_wordpress_state.py \
+  --config /tmp/check-wordpress-state.json \
+  --mode visual-ish \
+  --min-text-similarity 0.98
+```
+
+Output format:
+- `ADMIN_LOGIN`: login URL used, final URL reached, login cookie status, page title
+- `PAGE_COMPARE`: one block per checked path with status and similarity metrics
+- `SUMMARY`: final status and per-check recap
+
+How to read the metrics:
+- `html_similarity`: structure-oriented comparison after removing scripts/styles and normalizing base URLs
+- `text_similarity`: visible-text comparison after stripping markup
+- low `html_similarity` with high `text_similarity` usually means markup drift, not content drift
+- title/H1 mismatches are treated as blocking because they usually indicate a real page-level regression
+
+Status semantics:
+- `OK`: page/admin check is within the configured expectations
+- `WARN`: content still matches closely enough, but a non-blocking threshold was crossed
+- `FAIL`: admin access is broken, HTTP fetch failed, or a blocking mismatch (for example title/H1) was detected
+
+Exit codes:
+- `0`: all checks passed, or only non-blocking warnings were found
+- `1`: at least one blocking failure was found
+
 ## Access URLs
 
 - WordPress: `http://localhost:${APPLICATION_WEB_PORT}` (default `http://localhost`)
