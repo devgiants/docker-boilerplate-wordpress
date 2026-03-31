@@ -17,3 +17,6 @@ justfile.*
 AGENTS.md
 .codex
 tools/
+*.tar
+*.tar.gz
+*.zip
