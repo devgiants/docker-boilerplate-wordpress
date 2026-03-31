@@ -315,9 +315,10 @@ import-db-file dump_file: up
 
     mysql_user="${MYSQL_USER:-root}"
     mysql_password="${MYSQL_PASSWORD:-${MYSQL_ROOT_PASSWORD:-}}"
-    mysql_cmd=(mysql -u"${mysql_user}")
+    mysql_client="$(docker compose exec -T "${MYSQL_HOST}" sh -lc 'if command -v mysql >/dev/null 2>&1; then printf mysql; elif command -v mariadb >/dev/null 2>&1; then printf mariadb; else exit 1; fi')"
+    mysql_cmd=("${mysql_client}" -u"${mysql_user}")
     if [[ -n "$mysql_password" ]]; then
-      mysql_cmd=(mysql -u"${mysql_user}" "-p${mysql_password}")
+      mysql_cmd=("${mysql_client}" -u"${mysql_user}" "-p${mysql_password}")
     fi
 
     echo "Dropping existing tables in ${MYSQL_DATABASE} (if any)..."
