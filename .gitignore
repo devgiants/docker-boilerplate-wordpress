@@ -16,7 +16,7 @@ wp-content/wp-rocket-config
 justfile.*
 AGENTS.md
 .codex
-tools/
+/tools
 *.tar
 *.tar.gz
 *.zip
