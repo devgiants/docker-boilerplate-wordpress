@@ -294,7 +294,7 @@ configure-wordpress: build wait-db
     # Add config parameters
     docker compose exec --user www-data php wp config set WP_DEBUG false --raw
     docker compose exec --user www-data php wp config set WP_DEBUG_LOG false --raw
-    docker compose exec --user www-data php wp config set WP_AUTO_UPDATE_CORE false --raw
+    docker compose exec --user www-data php wp config set WP_AUTO_UPDATE_CORE 'minor' --raw
     docker compose exec --user www-data php wp config set WP_POST_REVISIONS 5 --raw
 
 
