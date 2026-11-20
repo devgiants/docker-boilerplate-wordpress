@@ -29,7 +29,7 @@ task('deploy:writable')->disable();
 
 desc('Remove all uneeded files');
 task('remove', function () {
-    run("rm -rf {{release_path}}/docker {{release_path}}/.env {{release_path}}/.git* {{release_path}}/deploy.php {{release_path}}/docker-compose.yml {{release_path}}/justfile* {{release_path}}/.vscode {{release_path}}/AGENTS.md {{release_path}}/tools {{release_path}}/wp-cli.yml*");
+    run("rm -rf {{release_path}}/docker {{release_path}}/.env* {{release_path}}/.git* {{release_path}}/deploy.php* {{release_path}}/docker-compose*.yml {{release_path}}/docker-compose*.yaml {{release_path}}/compose*.yml {{release_path}}/compose*.yaml {{release_path}}/composer.* {{release_path}}/justfile* {{release_path}}/Makefile {{release_path}}/wp-cli.y* {{release_path}}/.vscode {{release_path}}/.idea {{release_path}}/.codex {{release_path}}/AGENTS.md {{release_path}}/tools {{release_path}}/.bash_history {{release_path}}/phpunit.xml* {{release_path}}/.phpunit.result.cache {{release_path}}/*.sql {{release_path}}/*.sql.gz {{release_path}}/*.zip {{release_path}}/*.tar {{release_path}}/*.tar.gz {{release_path}}/*.tgz {{release_path}}/*.log");
 });
 after('deploy:cleanup', 'remove');
 
